@@ -264,7 +264,7 @@ fn main() {
                 if let Error(_) = token.kind {
                     eprintln!("{} {}", token.kind, token.value);
                 } else if token.kind == String {
-                    println!("{} \"{}\" null", token.kind, token.value);
+                    println!("{} \"{}\" {}", token.kind, token.value, token.value);
                 } else {
                     println!("{} {} null", token.kind, token.value);
                 }
