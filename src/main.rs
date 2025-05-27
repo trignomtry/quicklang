@@ -185,6 +185,7 @@ fn main() {
                         '/' => {
                             if token == '/' {
                                 is_commented = true;
+                                last = '\n';
                                 continue;
                             } else {
                                 tokens.push(Token {
