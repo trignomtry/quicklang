@@ -11,6 +11,8 @@ struct Token {
 enum TokenKind {
     LParen,
     RParen,
+    LBrace,
+    RBrace,
 }
 
 impl Display for TokenKind {
@@ -18,6 +20,8 @@ impl Display for TokenKind {
         let s = match self {
             Self::LParen => "LEFT_PAREN",
             Self::RParen => "RIGHT_PAREN",
+            Self::LBrace => "LEFT_BRACE",
+            Self::RBrace => "RIGHT_BRACE",
         };
         write!(f, "{}", s)
     }
@@ -49,6 +53,8 @@ fn main() {
                     kind: match token {
                         '(' => LParen,
                         ')' => RParen,
+                        '{' => LBrace,
+                        '}' => RBrace,
                         _ => todo!("Anything but parens not implemented"),
                     },
                 });
