@@ -20,6 +20,8 @@ enum TokenKind {
     Plus,
     Minus,
     Semicolon,
+    Equal,
+    EqualEqual,
     Error(u64),
 }
 
@@ -36,6 +38,8 @@ impl Display for TokenKind {
             Self::Plus => "PLUS",
             Self::Minus => "MINUS",
             Self::Semicolon => "SEMICOLON",
+            Self::Equal => "EQUAL",
+            Self::EqualEqual => "EQUAL_EQUAL",
             Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
         };
         write!(f, "{}", s)
@@ -55,6 +59,7 @@ fn main() {
     match command.as_str() {
         "tokenize" => {
             let mut has_error = false;
+            let mut is_last_equal = false;
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
@@ -65,6 +70,22 @@ fn main() {
             let mut tokens = vec![];
             let mut line = 1;
             for token in file_contents.chars() {
+                if is_last_equal {
+                    if token == '=' {
+                        tokens.push(Token {
+                            value: String::from("=="),
+                            kind: EqualEqual,
+                        });
+                        is_last_equal = false;
+                        continue;
+                    } else {
+                        tokens.push(Token {
+                            value: String::from("="),
+                            kind: Equal,
+                        });
+                        is_last_equal = false;
+                    }
+                }
                 tokens.push(Token {
                     value: token.to_string(),
                     kind: match token {
@@ -78,6 +99,10 @@ fn main() {
                         '+' => Plus,
                         '-' => Minus,
                         ';' => Semicolon,
+                        '=' => {
+                            is_last_equal = true;
+                            continue;
+                        }
                         '\n' => {
                             line += 1;
                             continue;
