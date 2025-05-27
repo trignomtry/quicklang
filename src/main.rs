@@ -8,6 +8,7 @@ struct Token {
     kind: TokenKind,
 }
 
+#[derive(PartialEq, Eq)]
 enum TokenKind {
     LParen,
     RParen,
@@ -19,6 +20,7 @@ enum TokenKind {
     Plus,
     Minus,
     Semicolon,
+    Error(u64),
 }
 
 impl Display for TokenKind {
@@ -34,6 +36,7 @@ impl Display for TokenKind {
             Self::Plus => "PLUS",
             Self::Minus => "MINUS",
             Self::Semicolon => "SEMICOLON",
+            Self::Error(line) => &format!("[line {}] Error: Unexpected Character:", line),
         };
         write!(f, "{}", s)
     }
@@ -59,6 +62,7 @@ fn main() {
                 String::new()
             });
             let mut tokens = vec![];
+            let mut line = 0;
             for token in file_contents.chars() {
                 tokens.push(Token {
                     value: token.to_string(),
@@ -73,13 +77,29 @@ fn main() {
                         '+' => Plus,
                         '-' => Minus,
                         ';' => Semicolon,
+                        '\n' => {
+                            line += 1;
+                            continue;
+                        }
                         _ => todo!("Anything but parens not implemented"),
                     },
                 });
             }
             file_contents.clear();
             for token in tokens {
-                println!("{} {} null", token.kind, token.value);
+                if let Error(_) = token.kind {
+                    println!("{}{}", token.kind, token.value)
+                }
+                println!(
+                    "{} {} {}",
+                    token.kind,
+                    token.value,
+                    if let Error(_) = token.kind {
+                        "null"
+                    } else {
+                        ""
+                    }
+                );
             }
 
             if !file_contents.is_empty() {
