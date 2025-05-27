@@ -214,7 +214,7 @@ fn main() {
                 });
                 last = token;
             }
-            if last != '\n' && ['!', '=', '>', '<', '/'].contains(&last) {
+            if !is_commented && last != '\n' && ['!', '=', '>', '<', '/'].contains(&last) {
                 tokens.push(Token {
                     value: last.to_string(),
                     kind: match get_kind(last) {
@@ -236,6 +236,7 @@ fn main() {
                     },
                 });
             }
+
             file_contents.clear();
             for token in tokens {
                 if let Error(_) = token.kind {
