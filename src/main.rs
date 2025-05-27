@@ -28,6 +28,7 @@ enum TokenKind {
     LessEqual,
     Greater,
     GreaterEqual,
+    Slash,
     Error(u64),
 }
 
@@ -52,6 +53,7 @@ impl Display for TokenKind {
             Self::LessEqual => "LESS_EQUAL",
             Self::Greater => "GREATER",
             Self::GreaterEqual => "GREATER_EQUAL",
+            Self::Slash => "SLASH",
             Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
         };
         write!(f, "{}", s)
@@ -70,7 +72,7 @@ fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
         '+' => Plus,
         '-' => Minus,
         ';' => Semicolon,
-        '=' | '!' | '>' | '<' => {
+        '=' | '!' | '>' | '<' | '/' => {
             return Err(Ok(token));
         }
         '\n' => {
@@ -96,6 +98,8 @@ fn main() {
         "tokenize" => {
             let mut has_error = false;
             let mut last: char = '\n';
+            let mut is_commented = false;
+
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
@@ -106,6 +110,11 @@ fn main() {
             let mut tokens = vec![];
             let mut line = 1;
             for token in file_contents.chars() {
+                if is_commented && token != '\n' {
+                    continue;
+                } else {
+                    is_commented = false;
+                }
                 if token == '\n' {
                     line += 1;
                     continue;
@@ -170,6 +179,18 @@ fn main() {
                                         }
                                     },
                                 });
+                            }
+                        }
+                        '/' => {
+                            if token == '/' {
+                                is_commented = true;
+                                continue;
+                            } else {
+                                tokens.push(Token {
+                                    value: "/".to_string(),
+                                    kind: Slash,
+                                });
+                                last = '\n';
                             }
                         }
                         _ => {}
