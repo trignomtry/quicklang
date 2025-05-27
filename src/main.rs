@@ -63,7 +63,7 @@ fn main() {
                 String::new()
             });
             let mut tokens = vec![];
-            let mut line = 0;
+            let mut line = 1;
             for token in file_contents.chars() {
                 tokens.push(Token {
                     value: token.to_string(),
