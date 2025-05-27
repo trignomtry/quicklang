@@ -87,16 +87,11 @@ fn main() {
             }
             file_contents.clear();
             for token in tokens {
-                println!(
-                    "{} {} {}",
-                    token.kind,
-                    token.value,
-                    if let Error(_) = token.kind {
-                        ""
-                    } else {
-                        "null"
-                    }
-                );
+                if let Error(_) = token.kind {
+                    eprintln!("{} {}", token.kind, token.value);
+                } else {
+                    println!("{} {} null", token.kind, token.value,);
+                }
             }
 
             if !file_contents.is_empty() {
