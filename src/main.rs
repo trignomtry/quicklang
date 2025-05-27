@@ -114,6 +114,12 @@ fn main() {
                     },
                 });
             }
+            if is_last_equal {
+                tokens.push(Token {
+                    value: "=".to_string(),
+                    kind: Equal,
+                });
+            }
             file_contents.clear();
             for token in tokens {
                 if let Error(_) = token.kind {
