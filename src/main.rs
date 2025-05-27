@@ -1,6 +1,27 @@
+use crate::TokenKind::*;
 use std::env;
+use std::fmt::Display;
 use std::fs;
-use std::io::{self, Write};
+
+struct Token {
+    value: String,
+    kind: TokenKind,
+}
+
+enum TokenKind {
+    LParen,
+    RParen,
+}
+
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            Self::LParen => "LEFT_PAREN",
+            Self::RParen => "RIGHT_PAREN",
+        };
+        write!(f, "{}", s)
+    }
+}
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -17,10 +38,25 @@ fn main() {
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
-            let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
+            let mut file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
                 eprintln!("Failed to read file {}", filename);
                 String::new()
             });
+            let mut tokens = vec![];
+            for token in file_contents.chars() {
+                tokens.push(Token {
+                    value: token.to_string(),
+                    kind: match token {
+                        '(' => LParen,
+                        ')' => RParen,
+                        _ => todo!("Anything but parens not implemented"),
+                    },
+                });
+            }
+            file_contents.clear();
+            for token in tokens {
+                println!("{} {} null", token.kind, token.value);
+            }
 
             if !file_contents.is_empty() {
                 panic!("Scanner not implemented");
