@@ -72,7 +72,7 @@ fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
         '+' => Plus,
         '-' => Minus,
         ';' => Semicolon,
-        '=' | '!' | '>' | '<' | '/' => {
+        '=' | '!' | '>' | '<' | '/' | ' ' => {
             return Err(Ok(token));
         }
         '\n' => {
