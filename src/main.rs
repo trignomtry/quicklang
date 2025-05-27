@@ -107,6 +107,7 @@ fn main() {
                 eprintln!("Failed to read file {}", filename);
                 String::new()
             });
+
             let mut tokens = vec![];
             let mut line = 1;
             for token in file_contents.chars() {
