@@ -127,6 +127,7 @@ fn main() {
                             value: in_string.clone().unwrap(),
                             kind: String,
                         });
+                        in_string = None;
                     }
                     continue;
                 } else if let Some(ref mut s) = in_string {
@@ -257,6 +258,10 @@ fn main() {
                         },
                     },
                 });
+            }
+
+            if in_string.is_some() {
+                has_error = true;
             }
 
             file_contents.clear();
