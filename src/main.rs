@@ -271,7 +271,7 @@ fn main() {
             file_contents.clear();
             for token in tokens {
                 if let Error(_, _) = token.kind {
-                    eprintln!("{} {}", token.kind, token.value);
+                    eprintln!("{}{}", token.kind, token.value);
                 } else if token.kind == String {
                     println!("{} \"{}\" {}", token.kind, token.value, token.value);
                 } else {
