@@ -173,7 +173,23 @@ fn main() {
             if last != '\n' {
                 tokens.push(Token {
                     value: last.to_string(),
-                    kind: get_kind(last).unwrap(),
+                    kind: match get_kind(last) {
+                        Ok(r) => r,
+                        Err(e) => match e {
+                            Ok(r) => match r {
+                                '=' => Equal,
+                                '!' => Bang,
+                                _ => {
+                                    println!("If you're seeing this just give up");
+                                    std::process::exit(1);
+                                }
+                            },
+                            Err(()) => {
+                                has_error = true;
+                                Error(line)
+                            }
+                        },
+                    },
                 });
             }
             file_contents.clear();
