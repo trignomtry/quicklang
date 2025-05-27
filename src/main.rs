@@ -54,6 +54,7 @@ fn main() {
 
     match command.as_str() {
         "tokenize" => {
+            let mut has_error = false;
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
@@ -81,7 +82,10 @@ fn main() {
                             line += 1;
                             continue;
                         }
-                        _ => Error(line),
+                        _ => {
+                            has_error = true;
+                            Error(line)
+                        }
                     },
                 });
             }
@@ -98,6 +102,9 @@ fn main() {
                 panic!("Scanner not implemented");
             } else {
                 println!("EOF  null"); // Placeholder, replace this line when implementing the scanner
+            }
+            if has_error {
+                std::process::exit(65);
             }
         }
         _ => {
