@@ -13,6 +13,11 @@ enum TokenKind {
     RParen,
     LBrace,
     RBrace,
+    Star,
+    Dot,
+    Comma,
+    Plus,
+    Minus,
 }
 
 impl Display for TokenKind {
@@ -22,6 +27,11 @@ impl Display for TokenKind {
             Self::RParen => "RIGHT_PAREN",
             Self::LBrace => "LEFT_BRACE",
             Self::RBrace => "RIGHT_BRACE",
+            Self::Star => "STAR",
+            Self::Dot => "DOT",
+            Self::Comma => "COMMA",
+            Self::Plus => "PLUS",
+            Self::Minus => "MINUS",
         };
         write!(f, "{}", s)
     }
@@ -55,6 +65,11 @@ fn main() {
                         ')' => RParen,
                         '{' => LBrace,
                         '}' => RBrace,
+                        '*' => Star,
+                        '.' => Dot,
+                        ',' => Comma,
+                        '+' => Plus,
+                        '-' => Minus,
                         _ => todo!("Anything but parens not implemented"),
                     },
                 });
