@@ -36,7 +36,7 @@ impl Display for TokenKind {
             Self::Plus => "PLUS",
             Self::Minus => "MINUS",
             Self::Semicolon => "SEMICOLON",
-            Self::Error(line) => &format!("[line {}] Error: Unexpected Character:", line),
+            Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
         };
         write!(f, "{}", s)
     }
