@@ -24,6 +24,10 @@ enum TokenKind {
     EqualEqual,
     Bang,
     BangEqual,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
     Error(u64),
 }
 
@@ -44,6 +48,10 @@ impl Display for TokenKind {
             Self::EqualEqual => "EQUAL_EQUAL",
             Self::Bang => "BANG",
             Self::BangEqual => "BANG_EQUAL",
+            Self::Less => "LESS",
+            Self::LessEqual => "LESS_EQUAL",
+            Self::Greater => "GREATER",
+            Self::GreaterEqual => "GREATER_EQUAL",
             Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
         };
         write!(f, "{}", s)
@@ -62,7 +70,7 @@ fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
         '+' => Plus,
         '-' => Minus,
         ';' => Semicolon,
-        '=' | '!' => {
+        '=' | '!' | '>' | '<' => {
             return Err(Ok(token));
         }
         '\n' => {
@@ -135,22 +143,37 @@ fn main() {
                                 });
                             }
                         }
+                        '>' | '<' => {
+                            if token == '=' {
+                                tokens.push(Token {
+                                    value: format!("{}{}", last, token),
+                                    kind: match last {
+                                        '>' => GreaterEqual,
+                                        '<' => LessEqual,
+                                        _ => {
+                                            eprintln!("This should never happen");
+                                            std::process::exit(1);
+                                        }
+                                    },
+                                });
+                                last = '\n';
+                                continue;
+                            } else {
+                                tokens.push(Token {
+                                    value: last.to_string(),
+                                    kind: match last {
+                                        '>' => Greater,
+                                        '<' => Less,
+                                        _ => {
+                                            eprintln!("This should never happen");
+                                            std::process::exit(1);
+                                        }
+                                    },
+                                });
+                            }
+                        }
                         _ => {}
                     };
-                    // if token == '=' {
-                    //     tokens.push(Token {
-                    //         value: String::from("=="),
-                    //         kind: EqualEqual,
-                    //     });
-                    //     last = '\n';
-                    //     continue;
-                    // } else {
-                    //     tokens.push(Token {
-                    //         value: String::from("="),
-                    //         kind: Equal,
-                    //     });
-                    //     last = '\n';
-                    // }
                 }
                 tokens.push(Token {
                     value: token.to_string(),
@@ -170,7 +193,7 @@ fn main() {
                 });
                 last = token;
             }
-            if last != '\n' && ['!', '='].contains(&last) {
+            if last != '\n' && ['!', '=', '>', '<'].contains(&last) {
                 tokens.push(Token {
                     value: last.to_string(),
                     kind: match get_kind(last) {
