@@ -4,7 +4,7 @@ use std::fmt::Display;
 use std::fs;
 
 struct Token {
-    value: String,
+    value: std::string::String,
     kind: TokenKind,
 }
 
@@ -29,6 +29,7 @@ enum TokenKind {
     Greater,
     GreaterEqual,
     Slash,
+    String,
     Error(u64),
 }
 
@@ -54,6 +55,7 @@ impl Display for TokenKind {
             Self::Greater => "GREATER",
             Self::GreaterEqual => "GREATER_EQUAL",
             Self::Slash => "SLASH",
+            Self::String => "STRING",
             Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
         };
         write!(f, "{}", s)
@@ -85,7 +87,7 @@ fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
+    let args: Vec<std::string::String> = env::args().collect();
     if args.len() < 3 {
         eprintln!("Usage: {} tokenize <filename>", args[0]);
         return;
@@ -99,13 +101,14 @@ fn main() {
             let mut has_error = false;
             let mut last: char = '\n';
             let mut is_commented = false;
+            let mut in_string = None;
 
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
             let mut file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
                 eprintln!("Failed to read file {}", filename);
-                String::new()
+                std::string::String::new()
             });
 
             let mut tokens = vec![];
@@ -115,6 +118,20 @@ fn main() {
                     continue;
                 } else {
                     is_commented = false;
+                }
+                if token == '"' {
+                    if in_string.is_none() {
+                        in_string = Some("".to_string());
+                    } else {
+                        tokens.push(Token {
+                            value: in_string.clone().unwrap(),
+                            kind: String,
+                        });
+                    }
+                    continue;
+                } else if let Some(ref mut s) = in_string {
+                    s.push(token);
+                    continue;
                 }
                 if token == '\n' {
                     line += 1;
@@ -246,8 +263,10 @@ fn main() {
             for token in tokens {
                 if let Error(_) = token.kind {
                     eprintln!("{} {}", token.kind, token.value);
+                } else if token.kind == String {
+                    println!("{} \"{}\" null", token.kind, token.value);
                 } else {
-                    println!("{} {} null", token.kind, token.value,);
+                    println!("{} {} null", token.kind, token.value);
                 }
             }
 
