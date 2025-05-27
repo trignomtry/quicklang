@@ -227,7 +227,7 @@ fn main() {
                             }
                             Err(()) => {
                                 has_error = true;
-                                Error(line, "Unexpected character:".to_string())
+                                Error(line, "Unexpected character: ".to_string())
                             }
                         },
                     },
@@ -253,7 +253,7 @@ fn main() {
                             },
                             Err(()) => {
                                 has_error = true;
-                                Error(line, "Unexpected character:".to_string())
+                                Error(line, "Unexpected character: ".to_string())
                             }
                         },
                     },
