@@ -22,6 +22,8 @@ enum TokenKind {
     Semicolon,
     Equal,
     EqualEqual,
+    Bang,
+    BangEqual,
     Error(u64),
 }
 
@@ -40,10 +42,36 @@ impl Display for TokenKind {
             Self::Semicolon => "SEMICOLON",
             Self::Equal => "EQUAL",
             Self::EqualEqual => "EQUAL_EQUAL",
+            Self::Bang => "BANG",
+            Self::BangEqual => "BANG_EQUAL",
             Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
         };
         write!(f, "{}", s)
     }
+}
+
+fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
+    Ok(match token {
+        '(' => LParen,
+        ')' => RParen,
+        '{' => LBrace,
+        '}' => RBrace,
+        '*' => Star,
+        '.' => Dot,
+        ',' => Comma,
+        '+' => Plus,
+        '-' => Minus,
+        ';' => Semicolon,
+        '=' | '!' => {
+            return Err(Ok(token));
+        }
+        '\n' => {
+            return Err(Ok(token));
+        }
+        _ => {
+            return Err(Err(()));
+        }
+    })
 }
 
 fn main() {
@@ -59,7 +87,7 @@ fn main() {
     match command.as_str() {
         "tokenize" => {
             let mut has_error = false;
-            let mut is_last_equal = false;
+            let mut last: char = '\n';
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
@@ -70,54 +98,82 @@ fn main() {
             let mut tokens = vec![];
             let mut line = 1;
             for token in file_contents.chars() {
-                if is_last_equal {
-                    if token == '=' {
-                        tokens.push(Token {
-                            value: String::from("=="),
-                            kind: EqualEqual,
-                        });
-                        is_last_equal = false;
-                        continue;
-                    } else {
-                        tokens.push(Token {
-                            value: String::from("="),
-                            kind: Equal,
-                        });
-                        is_last_equal = false;
-                    }
+                if token == '\n' {
+                    line += 1;
+                    continue;
+                }
+                if last != '\n' {
+                    match last {
+                        '!' => {
+                            if token == '=' {
+                                tokens.push(Token {
+                                    value: "!=".to_string(),
+                                    kind: BangEqual,
+                                });
+                                last = '\n';
+                                continue;
+                            } else {
+                                tokens.push(Token {
+                                    value: "!".to_string(),
+                                    kind: Bang,
+                                });
+                                last = '\n';
+                            }
+                        }
+                        '=' => {
+                            if token == '=' {
+                                tokens.push(Token {
+                                    value: "==".to_string(),
+                                    kind: EqualEqual,
+                                });
+                                last = '\n';
+                                continue;
+                            } else {
+                                tokens.push(Token {
+                                    value: "=".to_string(),
+                                    kind: Equal,
+                                });
+                            }
+                        }
+                        _ => {}
+                    };
+                    // if token == '=' {
+                    //     tokens.push(Token {
+                    //         value: String::from("=="),
+                    //         kind: EqualEqual,
+                    //     });
+                    //     last = '\n';
+                    //     continue;
+                    // } else {
+                    //     tokens.push(Token {
+                    //         value: String::from("="),
+                    //         kind: Equal,
+                    //     });
+                    //     last = '\n';
+                    // }
                 }
                 tokens.push(Token {
                     value: token.to_string(),
-                    kind: match token {
-                        '(' => LParen,
-                        ')' => RParen,
-                        '{' => LBrace,
-                        '}' => RBrace,
-                        '*' => Star,
-                        '.' => Dot,
-                        ',' => Comma,
-                        '+' => Plus,
-                        '-' => Minus,
-                        ';' => Semicolon,
-                        '=' => {
-                            is_last_equal = true;
-                            continue;
-                        }
-                        '\n' => {
-                            line += 1;
-                            continue;
-                        }
-                        _ => {
-                            has_error = true;
-                            Error(line)
-                        }
+                    kind: match get_kind(token) {
+                        Ok(t) => t,
+                        Err(e) => match e {
+                            Ok(c) => {
+                                last = c;
+                                continue;
+                            }
+                            Err(()) => {
+                                has_error = true;
+                                Error(line)
+                            }
+                        },
                     },
                 });
+                last = token;
             }
-            if is_last_equal {
+            if last != '\n' {
                 tokens.push(Token {
-                    value: "=".to_string(),
-                    kind: Equal,
+                    value: last.to_string(),
+                    kind: get_kind(last).unwrap(),
                 });
             }
             file_contents.clear();
