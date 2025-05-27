@@ -170,7 +170,7 @@ fn main() {
                 });
                 last = token;
             }
-            if last != '\n' {
+            if last != '\n' && ['!', '='].contains(&last) {
                 tokens.push(Token {
                     value: last.to_string(),
                     kind: match get_kind(last) {
