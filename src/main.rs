@@ -18,6 +18,7 @@ enum TokenKind {
     Comma,
     Plus,
     Minus,
+    Semicolon,
 }
 
 impl Display for TokenKind {
@@ -32,6 +33,7 @@ impl Display for TokenKind {
             Self::Comma => "COMMA",
             Self::Plus => "PLUS",
             Self::Minus => "MINUS",
+            Self::Semicolon => "SEMICOLON",
         };
         write!(f, "{}", s)
     }
@@ -70,6 +72,7 @@ fn main() {
                         ',' => Comma,
                         '+' => Plus,
                         '-' => Minus,
+                        ';' => Semicolon,
                         _ => todo!("Anything but parens not implemented"),
                     },
                 });
