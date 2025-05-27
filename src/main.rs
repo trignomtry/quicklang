@@ -81,7 +81,7 @@ fn main() {
                             line += 1;
                             continue;
                         }
-                        _ => todo!("Anything but parens not implemented"),
+                        _ => Error(line),
                     },
                 });
             }
