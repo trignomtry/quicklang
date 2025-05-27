@@ -224,6 +224,8 @@ fn main() {
                                 '=' => Equal,
                                 '!' => Bang,
                                 '/' => Slash,
+                                '<' => Less,
+                                '>' => Greater,
                                 _ => {
                                     println!("If you're seeing this just give up");
                                     std::process::exit(1);
