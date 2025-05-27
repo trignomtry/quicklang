@@ -223,6 +223,7 @@ fn main() {
                             Ok(r) => match r {
                                 '=' => Equal,
                                 '!' => Bang,
+                                '/' => Slash,
                                 _ => {
                                     println!("If you're seeing this just give up");
                                     std::process::exit(1);
