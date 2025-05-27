@@ -30,7 +30,7 @@ enum TokenKind {
     GreaterEqual,
     Slash,
     String,
-    Error(u64),
+    Error(u64, std::string::String),
 }
 
 impl Display for TokenKind {
@@ -56,7 +56,7 @@ impl Display for TokenKind {
             Self::GreaterEqual => "GREATER_EQUAL",
             Self::Slash => "SLASH",
             Self::String => "STRING",
-            Self::Error(line) => &format!("[line {}] Error: Unexpected character:", line),
+            Self::Error(line, error) => &format!("[line {}] Error: {}", line, error),
         };
         write!(f, "{}", s)
     }
@@ -227,7 +227,7 @@ fn main() {
                             }
                             Err(()) => {
                                 has_error = true;
-                                Error(line)
+                                Error(line, "Unexpected character:".to_string())
                             }
                         },
                     },
@@ -253,7 +253,7 @@ fn main() {
                             },
                             Err(()) => {
                                 has_error = true;
-                                Error(line)
+                                Error(line, "Unexpected character:".to_string())
                             }
                         },
                     },
@@ -262,6 +262,10 @@ fn main() {
 
             if in_string.is_some() {
                 has_error = true;
+                tokens.push(Token {
+                    value: "".to_string(),
+                    kind: Error(line, "Unterminated string.".to_string()),
+                });
             }
 
             file_contents.clear();
