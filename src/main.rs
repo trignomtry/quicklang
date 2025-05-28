@@ -31,6 +31,22 @@ enum TokenKind {
     Slash,
     Str,
     Identifier,
+    And,
+    Class,
+    Else,
+    False,
+    For,
+    Fun,
+    If,
+    Nil,
+    Or,
+    Print,
+    Return,
+    Super,
+    This,
+    True,
+    Var,
+    While,
     Number(f64),
     Error(u64, std::string::String),
 }
@@ -60,6 +76,22 @@ impl Display for TokenKind {
             Self::Str => "STRING",
             Self::Number(_) => "NUMBER",
             Self::Identifier => "IDENTIFIER",
+            Self::And => "AND",
+            Self::Class => "CLASS",
+            Self::Else => "ELSE",
+            Self::False => "FALSE",
+            Self::For => "FOR",
+            Self::Fun => "FUN",
+            Self::If => "IF",
+            Self::Nil => "NIL",
+            Self::Or => "OR",
+            Self::Print => "PRINT",
+            Self::Return => "RETURN",
+            Self::Super => "SUPER",
+            Self::This => "THIS",
+            Self::True => "TRUE",
+            Self::Var => "VAR",
+            Self::While => "WHILE",
             Self::Error(line, error) => &format!("[line {}] Error: {}", line, error),
         };
         write!(f, "{}", s)
@@ -79,6 +111,28 @@ fn is_single_char_token(c: char) -> Option<TokenKind> {
         '-' => Some(Minus),
         ';' => Some(Semicolon),
         _ => None,
+    }
+}
+
+fn get_special_ident(val: String) -> TokenKind {
+    match val.as_str() {
+        "and" => And,
+        "class" => Class,
+        "else" => Else,
+        "false" => False,
+        "for" => For,
+        "fun" => Fun,
+        "if" => If,
+        "nil" => Nil,
+        "or" => Or,
+        "print" => Print,
+        "return" => Return,
+        "super" => Super,
+        "this" => This,
+        "true" => True,
+        "var" => Var,
+        "while" => While,
+        _ => Identifier,
     }
 }
 
@@ -202,8 +256,8 @@ fn main() {
                     }
 
                     tokens.push(Token {
-                        value: identifier,
-                        kind: Identifier,
+                        value: identifier.clone(),
+                        kind: get_special_ident(identifier),
                     });
                     index = j;
                     continue;
