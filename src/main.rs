@@ -154,6 +154,13 @@ fn main() {
                         i.push(token);
                         index += 1;
                         continue;
+                    } else {
+                        // We hit a delimiter, so flush the current identifier
+                        tokens.push(Token {
+                            value: curr_ident.take().unwrap(),
+                            kind: Identifier,
+                        });
+                        // Don't increment index here - we need to process this delimiter token
                     }
                 }
                 let mut is_pointed = false;
