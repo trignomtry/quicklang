@@ -189,6 +189,7 @@ fn main() {
                                     kind: BangEqual,
                                 });
                                 last = '\n';
+                                index += 1;
                                 continue;
                             } else {
                                 tokens.push(Token {
