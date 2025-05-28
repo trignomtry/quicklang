@@ -144,6 +144,18 @@ fn main() {
                     index += 1;
                     continue;
                 }
+                if let Some(i) = curr_ident.as_mut() {
+                    if ![
+                        '>', '<', '=', ' ', '=', '!', '>', '<', '/', ' ', '\t', '\n', '(', ')',
+                        '{', '}', '+', '-', '*', '/', '.',
+                    ]
+                    .contains(&token)
+                    {
+                        i.push(token);
+                        index += 1;
+                        continue;
+                    }
+                }
                 let mut is_pointed = false;
                 let mut our_num = 0.0;
                 let mut j = index;
