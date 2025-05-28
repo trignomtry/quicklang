@@ -158,6 +158,9 @@ fn main() {
                             our_num += n;
                         }
                     } else if *num == '.' {
+                        if act_num == String::new() {
+                            break;
+                        }
                         act_num.push(*num);
                         is_pointed = true;
                     } else {
