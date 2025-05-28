@@ -8,7 +8,7 @@ struct Token {
     kind: TokenKind,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq)]
 enum TokenKind {
     LParen,
     RParen,
@@ -29,7 +29,8 @@ enum TokenKind {
     Greater,
     GreaterEqual,
     Slash,
-    String,
+    Str,
+    Number(f64),
     Error(u64, std::string::String),
 }
 
@@ -55,7 +56,8 @@ impl Display for TokenKind {
             Self::Greater => "GREATER",
             Self::GreaterEqual => "GREATER_EQUAL",
             Self::Slash => "SLASH",
-            Self::String => "STRING",
+            Self::Str => "STRING",
+            Self::Number(_) => "NUMBER",
             Self::Error(line, error) => &format!("[line {}] Error: {}", line, error),
         };
         write!(f, "{}", s)
@@ -101,7 +103,7 @@ fn main() {
             let mut has_error = false;
             let mut last: char = '\n';
             let mut is_commented = false;
-            let mut in_string = None;
+            let mut in_string: Option<std::string::String> = None;
 
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
@@ -113,7 +115,10 @@ fn main() {
 
             let mut tokens = vec![];
             let mut line = 1;
-            for token in file_contents.chars() {
+            let mut iterable: Vec<char> = file_contents.chars().collect();
+            let mut index = 0;
+            while index < iterable.len() {
+                let token = *iterable.get(index).unwrap();
                 if is_commented && token != '\n' {
                     continue;
                 } else {
@@ -125,7 +130,7 @@ fn main() {
                     } else {
                         tokens.push(Token {
                             value: in_string.clone().unwrap(),
-                            kind: String,
+                            kind: Str,
                         });
                         in_string = None;
                     }
@@ -134,6 +139,39 @@ fn main() {
                     s.push(token);
                     continue;
                 }
+                let mut is_pointed: f64 = -1.0;
+                let mut our_num = 0.0;
+                let mut j = index;
+                let mut act_num = String::new();
+                while let Some(num) = &iterable.to_vec().get(j) {
+                    j += 1;
+                    if let Ok(n) = num.to_string().parse::<f64>() {
+                        act_num.push(**num);
+                        if is_pointed == -1.0 {
+                            our_num *= 10.0;
+                            our_num += n;
+                        } else {
+                            is_pointed += 1.0;
+                            our_num += n / (is_pointed * 10.0);
+                        }
+                    } else if num == &&'.' {
+                        act_num.push(**num);
+                        is_pointed = 0.0;
+                    } else {
+                        break;
+                    }
+                }
+                if index != j {
+                    for _ in index..j {
+                        index += 1;
+                    }
+                    tokens.push(Token {
+                        value: act_num,
+                        kind: Number(our_num),
+                    });
+                    continue;
+                }
+
                 if token == '\n' {
                     line += 1;
                     continue;
@@ -234,6 +272,7 @@ fn main() {
                 });
                 last = token;
             }
+
             if !is_commented && last != '\n' && ['!', '=', '>', '<', '/'].contains(&last) {
                 tokens.push(Token {
                     value: last.to_string(),
@@ -272,8 +311,10 @@ fn main() {
             for token in tokens {
                 if let Error(_, _) = token.kind {
                     eprintln!("{}{}", token.kind, token.value);
-                } else if token.kind == String {
+                } else if token.kind == Str {
                     println!("{} \"{}\" {}", token.kind, token.value, token.value);
+                } else if let Number(n) = token.kind {
+                    println!("{} {} {:?}", token.kind, token.value, n);
                 } else {
                     println!("{} {} null", token.kind, token.value);
                 }
