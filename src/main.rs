@@ -118,7 +118,7 @@ fn main() {
             let mut iterable: Vec<char> = file_contents.chars().collect();
             let mut index = 0;
             while index < iterable.len() {
-                println!("{} - {:?}", index, iterable.get(index));
+                //println!("{} - {:?}", index, iterable.get(index));
                 let token = *iterable.get(index).unwrap();
                 if is_commented && token != '\n' {
                     index += 1;
