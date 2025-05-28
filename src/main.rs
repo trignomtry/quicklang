@@ -134,12 +134,6 @@ fn main() {
                     continue;
                 }
 
-                // Skip whitespace
-                if current_char == ' ' || current_char == '\t' {
-                    index += 1;
-                    continue;
-                }
-
                 // Handle strings
                 if current_char == '"' {
                     if in_string.is_none() {
@@ -155,6 +149,11 @@ fn main() {
                     continue;
                 } else if let Some(ref mut s) = in_string {
                     s.push(current_char);
+                    index += 1;
+                    continue;
+                }
+                // Skip whitespace
+                if current_char == ' ' || current_char == '\t' {
                     index += 1;
                     continue;
                 }
