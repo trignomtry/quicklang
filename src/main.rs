@@ -154,12 +154,6 @@ fn main() {
                         i.push(token);
                         index += 1;
                         continue;
-                    } else {
-                        tokens.push(Token {
-                            value: i.clone(),
-                            kind: Identifier,
-                        });
-                        curr_ident = None;
                     }
                 }
                 let mut is_pointed = false;
