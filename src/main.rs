@@ -154,13 +154,6 @@ fn main() {
                         i.push(token);
                         index += 1;
                         continue;
-                    } else {
-                        // We hit a delimiter, so flush the current identifier
-                        tokens.push(Token {
-                            value: curr_ident.take().unwrap(),
-                            kind: Identifier,
-                        });
-                        // Don't increment index here - we need to process this delimiter token
                     }
                 }
                 let mut is_pointed = false;
@@ -294,37 +287,47 @@ fn main() {
                         _ => {}
                     };
                 }
-                tokens.push(Token {
-                    value: token.to_string(),
-                    kind: match get_kind(token) {
-                        Ok(t) => t,
-                        Err(e) => match e {
-                            Ok(c) => {
-                                last = c;
-                                index += 1;
-                                if let Some(r) = curr_ident.clone() {
-                                    tokens.push(Token {
-                                        value: r,
-                                        kind: Identifier,
-                                    });
-                                    curr_ident = None;
-                                }
-                                continue;
+
+                match get_kind(token) {
+                    Ok(t) => {
+                        // Flush current identifier before processing single-character tokens
+                        if let Some(r) = curr_ident.take() {
+                            tokens.push(Token {
+                                value: r,
+                                kind: Identifier,
+                            });
+                        }
+                        tokens.push(Token {
+                            value: token.to_string(),
+                            kind: t,
+                        });
+                        last = token;
+                        index += 1;
+                    }
+                    Err(e) => match e {
+                        Ok(c) => {
+                            last = c;
+                            index += 1;
+                            if let Some(r) = curr_ident.clone() {
+                                tokens.push(Token {
+                                    value: r,
+                                    kind: Identifier,
+                                });
+                                curr_ident = None;
                             }
-                            Err(()) => {
-                                //has_error = true;
-                                let mut a = curr_ident.unwrap_or_default();
-                                a.push(token);
-                                curr_ident = Some(a);
-                                index += 1;
-                                continue;
-                                //Error(line, "Unexpected character: ".to_string())
-                            }
-                        },
+                            continue;
+                        }
+                        Err(()) => {
+                            //has_error = true;
+                            let mut a = curr_ident.unwrap_or_default();
+                            a.push(token);
+                            curr_ident = Some(a);
+                            index += 1;
+                            continue;
+                            //Error(line, "Unexpected character: ".to_string())
+                        }
                     },
-                });
-                last = token;
-                index += 1;
+                }
             }
 
             if !is_commented && last != '\n' && ['!', '=', '>', '<', '/'].contains(&last) {
