@@ -120,6 +120,7 @@ fn main() {
             while index < iterable.len() {
                 let token = *iterable.get(index).unwrap();
                 if is_commented && token != '\n' {
+                    index += 1;
                     continue;
                 } else {
                     is_commented = false;
@@ -134,9 +135,11 @@ fn main() {
                         });
                         in_string = None;
                     }
+                    index += 1;
                     continue;
                 } else if let Some(ref mut s) = in_string {
                     s.push(token);
+                    index += 1;
                     continue;
                 }
                 let mut is_pointed = false;
@@ -202,6 +205,7 @@ fn main() {
                                     kind: EqualEqual,
                                 });
                                 last = '\n';
+                                index += 1;
                                 continue;
                             } else {
                                 tokens.push(Token {
@@ -224,6 +228,7 @@ fn main() {
                                     },
                                 });
                                 last = '\n';
+                                index += 1;
                                 continue;
                             } else {
                                 tokens.push(Token {
@@ -243,6 +248,7 @@ fn main() {
                             if token == '/' {
                                 is_commented = true;
                                 last = '\n';
+                                index += 1;
                                 continue;
                             } else {
                                 tokens.push(Token {
@@ -262,6 +268,7 @@ fn main() {
                         Err(e) => match e {
                             Ok(c) => {
                                 last = c;
+                                index += 1;
                                 continue;
                             }
                             Err(()) => {
@@ -272,6 +279,7 @@ fn main() {
                     },
                 });
                 last = token;
+                index += 1;
             }
 
             if !is_commented && last != '\n' && ['!', '=', '>', '<', '/'].contains(&last) {
