@@ -66,26 +66,24 @@ impl Display for TokenKind {
     }
 }
 
-fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
-    Ok(match token {
-        '(' => LParen,
-        ')' => RParen,
-        '{' => LBrace,
-        '}' => RBrace,
-        '*' => Star,
-        '.' => Dot,
-        ',' => Comma,
-        '+' => Plus,
-        '-' => Minus,
-        ';' => Semicolon,
-        '=' | '!' | '>' | '<' | '/' | ' ' | '\t' | '\n' => {
-            return Err(Ok(token));
-        }
+fn is_single_char_token(c: char) -> Option<TokenKind> {
+    match c {
+        '(' => Some(LParen),
+        ')' => Some(RParen),
+        '{' => Some(LBrace),
+        '}' => Some(RBrace),
+        '*' => Some(Star),
+        '.' => Some(Dot),
+        ',' => Some(Comma),
+        '+' => Some(Plus),
+        '-' => Some(Minus),
+        ';' => Some(Semicolon),
+        _ => None,
+    }
+}
 
-        _ => {
-            return Err(Err(()));
-        }
-    })
+fn is_identifier_char(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
 }
 
 fn main() {
@@ -101,33 +99,49 @@ fn main() {
     match command.as_str() {
         "tokenize" => {
             let mut has_error = false;
-            let mut last: char = '\n';
             let mut is_commented = false;
             let mut in_string: Option<std::string::String> = None;
-            let mut curr_ident: Option<String> = None;
 
-            // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
 
-            let mut file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
+            let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
                 eprintln!("Failed to read file {}", filename);
                 std::string::String::new()
             });
 
             let mut tokens = vec![];
             let mut line = 1;
-            let mut iterable: Vec<char> = file_contents.chars().collect();
+            let chars: Vec<char> = file_contents.chars().collect();
             let mut index = 0;
-            while index < iterable.len() {
-                //println!("{} - {:?}", index, iterable.get(index));
-                let token = *iterable.get(index).unwrap();
-                if is_commented && token != '\n' {
+
+            while index < chars.len() {
+                let current_char = chars[index];
+
+                // Handle comments
+                if is_commented {
+                    if current_char == '\n' {
+                        is_commented = false;
+                        line += 1;
+                    }
                     index += 1;
                     continue;
-                } else {
-                    is_commented = false;
                 }
-                if token == '"' {
+
+                // Handle newlines
+                if current_char == '\n' {
+                    line += 1;
+                    index += 1;
+                    continue;
+                }
+
+                // Skip whitespace
+                if current_char == ' ' || current_char == '\t' {
+                    index += 1;
+                    continue;
+                }
+
+                // Handle strings
+                if current_char == '"' {
                     if in_string.is_none() {
                         in_string = Some("".to_string());
                     } else {
@@ -140,222 +154,163 @@ fn main() {
                     index += 1;
                     continue;
                 } else if let Some(ref mut s) = in_string {
-                    s.push(token);
+                    s.push(current_char);
                     index += 1;
                     continue;
                 }
-                if let Some(i) = curr_ident.as_mut() {
-                    if ![
-                        '>', '<', '=', ' ', '=', '!', '>', '<', '/', ' ', '\t', '\n', '(', ')',
-                        '{', '}', '+', '-', '*', '/', '.',
-                    ]
-                    .contains(&token)
-                    {
-                        i.push(token);
-                        index += 1;
+
+                // Handle numbers
+                if current_char.is_ascii_digit()
+                    || (current_char == '.'
+                        && index + 1 < chars.len()
+                        && chars[index + 1].is_ascii_digit())
+                {
+                    let mut number_str = String::new();
+                    let mut has_dot = false;
+                    let mut j = index;
+
+                    while j < chars.len() {
+                        let c = chars[j];
+                        if c.is_ascii_digit() {
+                            number_str.push(c);
+                        } else if c == '.' && !has_dot {
+                            number_str.push(c);
+                            has_dot = true;
+                        } else {
+                            break;
+                        }
+                        j += 1;
+                    }
+
+                    if let Ok(num_val) = number_str.parse::<f64>() {
+                        tokens.push(Token {
+                            value: number_str,
+                            kind: Number(num_val),
+                        });
+                        index = j;
                         continue;
                     }
                 }
-                let mut is_pointed = false;
-                let mut our_num = 0.0;
-                let mut j = index;
-                let mut act_num = String::new();
-                let mut factor = 0.1;
-                while let Some(num) = iterable.get(j) {
-                    if let Ok(n) = num.to_string().parse::<f64>() {
-                        act_num.push(*num);
-                        if is_pointed {
-                            our_num += n * factor;
-                            factor *= 0.1;
-                        } else {
-                            our_num *= 10.0;
-                            our_num += n;
-                        }
-                    } else if *num == '.' {
-                        if act_num == String::new() {
-                            break;
-                        }
-                        act_num.push(*num);
-                        is_pointed = true;
-                    } else {
-                        break;
+
+                // Handle identifiers
+                if current_char.is_alphabetic() || current_char == '_' {
+                    let mut identifier = String::new();
+                    let mut j = index;
+
+                    while j < chars.len() && is_identifier_char(chars[j]) {
+                        identifier.push(chars[j]);
+                        j += 1;
                     }
-                    j += 1;
-                }
-                if index != j {
-                    for _ in index..j {
-                        index += 1;
-                    }
+
                     tokens.push(Token {
-                        value: act_num,
-                        kind: Number(our_num),
+                        value: identifier,
+                        kind: Identifier,
                     });
+                    index = j;
                     continue;
                 }
 
-                if token == '\n' {
-                    line += 1;
-                    index += 1;
-                    if let Some(r) = curr_ident.clone() {
-                        tokens.push(Token {
-                            value: r,
-                            kind: Identifier,
-                        });
-                        curr_ident = None;
-                    }
-                    continue;
-                }
-                if last != '\n' {
-                    match last {
-                        '!' => {
-                            if token == '=' {
-                                tokens.push(Token {
-                                    value: "!=".to_string(),
-                                    kind: BangEqual,
-                                });
-                                last = '\n';
-                                index += 1;
-                                continue;
-                            } else {
-                                tokens.push(Token {
-                                    value: "!".to_string(),
-                                    kind: Bang,
-                                });
-                                last = '\n';
-                            }
+                // Handle two-character operators
+                if index + 1 < chars.len() {
+                    let next_char = chars[index + 1];
+                    let two_char = format!("{}{}", current_char, next_char);
+
+                    match two_char.as_str() {
+                        "==" => {
+                            tokens.push(Token {
+                                value: "==".to_string(),
+                                kind: EqualEqual,
+                            });
+                            index += 2;
+                            continue;
                         }
-                        '=' => {
-                            if token == '=' {
-                                tokens.push(Token {
-                                    value: "==".to_string(),
-                                    kind: EqualEqual,
-                                });
-                                last = '\n';
-                                index += 1;
-                                continue;
-                            } else {
-                                tokens.push(Token {
-                                    value: "=".to_string(),
-                                    kind: Equal,
-                                });
-                            }
+                        "!=" => {
+                            tokens.push(Token {
+                                value: "!=".to_string(),
+                                kind: BangEqual,
+                            });
+                            index += 2;
+                            continue;
                         }
-                        '>' | '<' => {
-                            if token == '=' {
-                                tokens.push(Token {
-                                    value: format!("{}{}", last, token),
-                                    kind: match last {
-                                        '>' => GreaterEqual,
-                                        '<' => LessEqual,
-                                        _ => {
-                                            eprintln!("This should never happen");
-                                            std::process::exit(1);
-                                        }
-                                    },
-                                });
-                                last = '\n';
-                                index += 1;
-                                continue;
-                            } else {
-                                tokens.push(Token {
-                                    value: last.to_string(),
-                                    kind: match last {
-                                        '>' => Greater,
-                                        '<' => Less,
-                                        _ => {
-                                            eprintln!("This should never happen");
-                                            std::process::exit(1);
-                                        }
-                                    },
-                                });
-                            }
+                        "<=" => {
+                            tokens.push(Token {
+                                value: "<=".to_string(),
+                                kind: LessEqual,
+                            });
+                            index += 2;
+                            continue;
                         }
-                        '/' => {
-                            if token == '/' {
-                                is_commented = true;
-                                last = '\n';
-                                index += 1;
-                                continue;
-                            } else {
-                                tokens.push(Token {
-                                    value: "/".to_string(),
-                                    kind: Slash,
-                                });
-                                last = '\n';
-                            }
+                        ">=" => {
+                            tokens.push(Token {
+                                value: ">=".to_string(),
+                                kind: GreaterEqual,
+                            });
+                            index += 2;
+                            continue;
+                        }
+                        "//" => {
+                            is_commented = true;
+                            index += 2;
+                            continue;
                         }
                         _ => {}
-                    };
-                }
-
-                match get_kind(token) {
-                    Ok(t) => {
-                        // Flush current identifier before processing single-character tokens
-                        if let Some(r) = curr_ident.take() {
-                            tokens.push(Token {
-                                value: r,
-                                kind: Identifier,
-                            });
-                        }
-                        tokens.push(Token {
-                            value: token.to_string(),
-                            kind: t,
-                        });
-                        last = token;
-                        index += 1;
                     }
-                    Err(e) => match e {
-                        Ok(c) => {
-                            last = c;
-                            index += 1;
-                            if let Some(r) = curr_ident.clone() {
-                                tokens.push(Token {
-                                    value: r,
-                                    kind: Identifier,
-                                });
-                                curr_ident = None;
-                            }
-                            continue;
-                        }
-                        Err(()) => {
-                            //has_error = true;
-                            let mut a = curr_ident.unwrap_or_default();
-                            a.push(token);
-                            curr_ident = Some(a);
-                            index += 1;
-                            continue;
-                            //Error(line, "Unexpected character: ".to_string())
-                        }
-                    },
                 }
+
+                // Handle single-character tokens
+                if let Some(token_kind) = is_single_char_token(current_char) {
+                    tokens.push(Token {
+                        value: current_char.to_string(),
+                        kind: token_kind,
+                    });
+                    index += 1;
+                    continue;
+                }
+
+                // Handle single-character operators
+                match current_char {
+                    '=' => {
+                        tokens.push(Token {
+                            value: "=".to_string(),
+                            kind: Equal,
+                        });
+                    }
+                    '!' => {
+                        tokens.push(Token {
+                            value: "!".to_string(),
+                            kind: Bang,
+                        });
+                    }
+                    '<' => {
+                        tokens.push(Token {
+                            value: "<".to_string(),
+                            kind: Less,
+                        });
+                    }
+                    '>' => {
+                        tokens.push(Token {
+                            value: ">".to_string(),
+                            kind: Greater,
+                        });
+                    }
+                    '/' => {
+                        tokens.push(Token {
+                            value: "/".to_string(),
+                            kind: Slash,
+                        });
+                    }
+                    _ => {
+                        has_error = true;
+                        tokens.push(Token {
+                            value: "".to_string(),
+                            kind: Error(line, format!("Unexpected character: {}", current_char)),
+                        });
+                    }
+                }
+                index += 1;
             }
 
-            if !is_commented && last != '\n' && ['!', '=', '>', '<', '/'].contains(&last) {
-                tokens.push(Token {
-                    value: last.to_string(),
-                    kind: match get_kind(last) {
-                        Ok(r) => r,
-                        Err(e) => match e {
-                            Ok(r) => match r {
-                                '=' => Equal,
-                                '!' => Bang,
-                                '/' => Slash,
-                                '<' => Less,
-                                '>' => Greater,
-                                _ => {
-                                    println!("If you're seeing this just give up");
-                                    std::process::exit(1);
-                                }
-                            },
-                            Err(()) => {
-                                has_error = true;
-                                Error(line, "Unexpected character: ".to_string())
-                            }
-                        },
-                    },
-                });
-            }
-
+            // Handle unterminated string
             if in_string.is_some() {
                 has_error = true;
                 tokens.push(Token {
@@ -364,14 +319,7 @@ fn main() {
                 });
             }
 
-            if let Some(r) = curr_ident {
-                tokens.push(Token {
-                    value: r,
-                    kind: Identifier,
-                });
-            }
-
-            file_contents.clear();
+            // Output tokens
             for token in tokens {
                 if let Error(_, _) = token.kind {
                     eprintln!("{}{}", token.kind, token.value);
@@ -389,11 +337,8 @@ fn main() {
                 }
             }
 
-            if !file_contents.is_empty() {
-                panic!("Scanner not implemented");
-            } else {
-                println!("EOF  null"); // Placeholder, replace this line when implementing the scanner
-            }
+            println!("EOF  null");
+
             if has_error {
                 std::process::exit(65);
             }
