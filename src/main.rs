@@ -139,27 +139,28 @@ fn main() {
                     s.push(token);
                     continue;
                 }
-                let mut is_pointed: f64 = -1.0;
+                let mut is_pointed = false;
                 let mut our_num = 0.0;
                 let mut j = index;
                 let mut act_num = String::new();
-                while let Some(num) = &iterable.to_vec().get(j) {
-                    j += 1;
+                let mut factor = 0.1;
+                while let Some(num) = iterable.get(j) {
                     if let Ok(n) = num.to_string().parse::<f64>() {
-                        act_num.push(**num);
-                        if is_pointed == -1.0 {
+                        act_num.push(*num);
+                        if is_pointed {
+                            our_num += n * factor;
+                            factor *= 0.1;
+                        } else {
                             our_num *= 10.0;
                             our_num += n;
-                        } else {
-                            is_pointed += 1.0;
-                            our_num += n / (is_pointed * 10.0);
                         }
-                    } else if num == &&'.' {
-                        act_num.push(**num);
-                        is_pointed = 0.0;
+                    } else if *num == '.' {
+                        act_num.push(*num);
+                        is_pointed = true;
                     } else {
                         break;
                     }
+                    j += 1;
                 }
                 if index != j {
                     for _ in index..j {
