@@ -30,6 +30,7 @@ enum TokenKind {
     GreaterEqual,
     Slash,
     Str,
+    Identifier,
     Number(f64),
     Error(u64, std::string::String),
 }
@@ -58,6 +59,7 @@ impl Display for TokenKind {
             Self::Slash => "SLASH",
             Self::Str => "STRING",
             Self::Number(_) => "NUMBER",
+            Self::Identifier => "IDENTIFIER",
             Self::Error(line, error) => &format!("[line {}] Error: {}", line, error),
         };
         write!(f, "{}", s)
@@ -76,12 +78,10 @@ fn get_kind(token: char) -> Result<TokenKind, Result<char, ()>> {
         '+' => Plus,
         '-' => Minus,
         ';' => Semicolon,
-        '=' | '!' | '>' | '<' | '/' | ' ' | '\t' => {
+        '=' | '!' | '>' | '<' | '/' | ' ' | '\t' | '\n' => {
             return Err(Ok(token));
         }
-        '\n' => {
-            return Err(Ok(token));
-        }
+
         _ => {
             return Err(Err(()));
         }
@@ -104,6 +104,7 @@ fn main() {
             let mut last: char = '\n';
             let mut is_commented = false;
             let mut in_string: Option<std::string::String> = None;
+            let mut curr_ident: Option<String> = None;
 
             // You can use print statements as follows for debugging, they'll be visible when running tests.
             eprintln!("Logs from your program will appear here!");
@@ -183,6 +184,13 @@ fn main() {
                 if token == '\n' {
                     line += 1;
                     index += 1;
+                    if let Some(r) = curr_ident.clone() {
+                        tokens.push(Token {
+                            value: r,
+                            kind: Identifier,
+                        });
+                        curr_ident = None;
+                    }
                     continue;
                 }
                 if last != '\n' {
@@ -275,11 +283,23 @@ fn main() {
                             Ok(c) => {
                                 last = c;
                                 index += 1;
+                                if let Some(r) = curr_ident.clone() {
+                                    tokens.push(Token {
+                                        value: r,
+                                        kind: Identifier,
+                                    });
+                                    curr_ident = None;
+                                }
                                 continue;
                             }
                             Err(()) => {
-                                has_error = true;
-                                Error(line, "Unexpected character: ".to_string())
+                                //has_error = true;
+                                let mut a = curr_ident.unwrap_or_default();
+                                a.push(token);
+                                curr_ident = Some(a);
+                                index += 1;
+                                continue;
+                                //Error(line, "Unexpected character: ".to_string())
                             }
                         },
                     },
@@ -319,6 +339,13 @@ fn main() {
                 tokens.push(Token {
                     value: "".to_string(),
                     kind: Error(line, "Unterminated string.".to_string()),
+                });
+            }
+
+            if let Some(r) = curr_ident {
+                tokens.push(Token {
+                    value: r,
+                    kind: Identifier,
                 });
             }
 
