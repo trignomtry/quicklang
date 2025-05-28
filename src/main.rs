@@ -314,8 +314,13 @@ fn main() {
                     eprintln!("{}{}", token.kind, token.value);
                 } else if token.kind == Str {
                     println!("{} \"{}\" {}", token.kind, token.value, token.value);
-                } else if let Number(n) = token.kind {
-                    println!("{} {} {:?}", token.kind, token.value, n);
+                } else if let Number(_) = token.kind {
+                    println!(
+                        "{} {} {}",
+                        token.kind,
+                        token.value,
+                        format_float(&token.value)
+                    );
                 } else {
                     println!("{} {} null", token.kind, token.value);
                 }
@@ -333,5 +338,13 @@ fn main() {
         _ => {
             eprintln!("Unknown command: {}", command);
         }
+    }
+}
+
+fn format_float(lexeme: &str) -> String {
+    if lexeme.contains('.') {
+        lexeme.to_string()
+    } else {
+        format!("{}.0", lexeme)
     }
 }
