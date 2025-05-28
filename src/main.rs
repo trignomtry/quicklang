@@ -343,7 +343,11 @@ fn main() {
 
 fn format_float(lexeme: &str) -> String {
     if lexeme.contains('.') {
-        lexeme.to_string()
+        let mut s = lexeme.trim_end_matches('0').to_string();
+        if s.ends_with('.') {
+            s.push('0');
+        }
+        s
     } else {
         format!("{}.0", lexeme)
     }
