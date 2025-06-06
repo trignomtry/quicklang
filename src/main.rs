@@ -215,8 +215,7 @@ impl Parser {
 
         if self.match_kind(TokenKind::LParen) {
             let expr = self.expression()?;
-            //self.consume(TokenKind::RParen, "Expect ')' after expression.")?;
-            //self.consume(TokenKind::RParen, "")?;
+            self.consume(TokenKind::RParen, "Expect ')' after expression.")?;
             return Ok(Expr::Grouping(Box::new(expr)));
         }
         Err(format!(
