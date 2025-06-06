@@ -114,11 +114,16 @@ fn parenthesize(name: &str, exprs: &[&Expr]) -> String {
 struct Parser {
     tokens: Vec<Token>,
     current: usize, // index into `tokens`
+    has_error: bool,
 }
 
 impl Parser {
     fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0 }
+        Self {
+            tokens,
+            current: 0,
+            has_error: false,
+        }
     }
 
     // ───── entry point ─────
@@ -215,7 +220,7 @@ impl Parser {
             self.consume(TokenKind::RParen, "Expect ')' after expression.")?;
             return Ok(Expr::Grouping(Box::new(expr)));
         }
-
+        self.has_error = true;
         Err(format!(
             "[line {}] Error at '{}': Expect expression.",
             pekd.line, pekd.value
@@ -395,6 +400,7 @@ fn main() {
                 println!("{}", p.print());
             } else if let Err(e) = res {
                 println!("{}", e);
+                std::process::exit(65);
             }
         }
         _ => {
