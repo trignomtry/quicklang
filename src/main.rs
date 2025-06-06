@@ -220,7 +220,8 @@ impl Parser {
 
         if self.match_kind(TokenKind::LParen) {
             let expr = self.expression()?;
-            self.consume(TokenKind::RParen, "Expect ')' after expression.")?;
+            //self.consume(TokenKind::RParen, "Expect ')' after expression.")?;
+            self.consume(TokenKind::RParen, "")?;
             return Ok(Expr::Grouping(Box::new(expr)));
         }
         self.has_error = true;
