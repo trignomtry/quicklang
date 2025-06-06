@@ -87,7 +87,7 @@ impl Expr {
     fn print(&self) -> String {
         match self {
             Expr::Literal(k) => match k {
-                TokenKind::Number(n) => format!("{}", n),
+                TokenKind::Number(n) => format!("{:?}", n),
                 TokenKind::True => "true".into(),
                 TokenKind::False => "false".into(),
                 TokenKind::Nil => "nil".into(),
