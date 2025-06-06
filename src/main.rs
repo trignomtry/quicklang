@@ -54,7 +54,7 @@ enum TokenKind {
     GreaterEqual,
     Slash,
     Str(String),
-    Identifier,
+    Identifier(String),
     And,
     Class,
     Else,
@@ -90,10 +90,10 @@ impl Expr {
             Expr::Literal(k) => match k {
                 TokenKind::Number(n) => format!("{:?}", n),
                 TokenKind::Str(o) => o.into(),
+                TokenKind::Identifier(i) => i.into(),
                 TokenKind::True => "true".into(),
                 TokenKind::False => "false".into(),
                 TokenKind::Nil => "nil".into(),
-
                 _ => "<bad lit>".into(),
             },
             Expr::Unary(op, right) => parenthesize(&op.value, &[right]),
@@ -213,6 +213,9 @@ impl Parser {
         } else if let TokenKind::Str(o) = &pekd.kind {
             self.advance();
             return Ok(Expr::Literal(TokenKind::Str(o.into())));
+        } else if let TokenKind::Identifier(i) = &pekd.kind {
+            self.advance();
+            return Ok(Expr::Literal(TokenKind::Identifier(i.into())));
         }
 
         if self.match_kind(TokenKind::LParen) {
@@ -301,7 +304,7 @@ impl Display for TokenKind {
             Self::Slash => "SLASH",
             Self::Str(_) => "STRING",
             Self::Number(_) => "NUMBER",
-            Self::Identifier => "IDENTIFIER",
+            Self::Identifier(_) => "IDENTIFIER",
             Self::And => "AND",
             Self::Class => "CLASS",
             Self::Else => "ELSE",
@@ -359,7 +362,7 @@ fn get_special_ident(val: String) -> TokenKind {
         "true" => True,
         "var" => Var,
         "while" => While,
-        _ => Identifier,
+        _ => Identifier(val),
     }
 }
 
@@ -400,7 +403,6 @@ fn main() {
                 println!("{}", p.print());
             } else if let Err(e) = res {
                 println!("{}", e);
-                println!();
                 std::process::exit(65);
             }
         }
