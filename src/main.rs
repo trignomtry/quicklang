@@ -401,6 +401,7 @@ fn main() {
             } else if let Err(e) = res {
                 println!();
                 println!("{}", e);
+                println!();
                 std::process::exit(65);
             }
         }
