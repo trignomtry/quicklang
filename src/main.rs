@@ -649,7 +649,9 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     });
     if has_error {
         for token in tokens {
-            token.print();
+            if let TokenKind::Error(_, _) = token.kind {
+                token.print();
+            }
         }
         std::process::exit(65);
     } else {
