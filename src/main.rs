@@ -642,18 +642,17 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             line,
         });
     }
-
+    tokens.push(Token {
+        value: "EOF".to_string(),
+        kind: Eof,
+        line,
+    });
     if has_error {
         for token in tokens {
             token.print();
         }
         std::process::exit(65);
     } else {
-        tokens.push(Token {
-            value: "EOF".to_string(),
-            kind: Eof,
-            line,
-        });
         tokens.clone()
     }
 }
