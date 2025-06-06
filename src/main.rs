@@ -7,6 +7,7 @@ use std::fs;
 struct Token {
     value: std::string::String,
     kind: TokenKind,
+    line: usize,
 }
 
 impl Token {
@@ -215,7 +216,10 @@ impl Parser {
             return Ok(Expr::Grouping(Box::new(expr)));
         }
 
-        Err("Expect expression.".into())
+        Err(format!(
+            "[line {}] Error at '{}': Expect expression.",
+            pekd.line, pekd.value
+        ))
     }
 
     // ───── helpers ─────
@@ -389,6 +393,8 @@ fn main() {
             let res = parser.parse();
             if let Ok(p) = res {
                 println!("{}", p.print());
+            } else if let Err(e) = res {
+                println!("{}", e);
             }
         }
         _ => {
@@ -446,6 +452,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                 tokens.push(Token {
                     value: in_string.clone().unwrap(),
                     kind: Str(in_string.clone().unwrap()),
+                    line,
                 });
                 in_string = None;
             }
@@ -487,6 +494,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                 tokens.push(Token {
                     value: number_str,
                     kind: Number(num_val),
+                    line,
                 });
                 index = j;
                 continue;
@@ -506,6 +514,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             tokens.push(Token {
                 value: identifier.clone(),
                 kind: get_special_ident(identifier),
+                line,
             });
             index = j;
             continue;
@@ -521,6 +530,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                     tokens.push(Token {
                         value: "==".to_string(),
                         kind: EqualEqual,
+                        line,
                     });
                     index += 2;
                     continue;
@@ -529,6 +539,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                     tokens.push(Token {
                         value: "!=".to_string(),
                         kind: BangEqual,
+                        line,
                     });
                     index += 2;
                     continue;
@@ -537,6 +548,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                     tokens.push(Token {
                         value: "<=".to_string(),
                         kind: LessEqual,
+                        line,
                     });
                     index += 2;
                     continue;
@@ -545,6 +557,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                     tokens.push(Token {
                         value: ">=".to_string(),
                         kind: GreaterEqual,
+                        line,
                     });
                     index += 2;
                     continue;
@@ -563,6 +576,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             tokens.push(Token {
                 value: current_char.to_string(),
                 kind: token_kind,
+                line,
             });
             index += 1;
             continue;
@@ -574,37 +588,46 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                 tokens.push(Token {
                     value: "=".to_string(),
                     kind: Equal,
+                    line,
                 });
             }
             '!' => {
                 tokens.push(Token {
                     value: "!".to_string(),
                     kind: Bang,
+                    line,
                 });
             }
             '<' => {
                 tokens.push(Token {
                     value: "<".to_string(),
                     kind: Less,
+                    line,
                 });
             }
             '>' => {
                 tokens.push(Token {
                     value: ">".to_string(),
                     kind: Greater,
+                    line,
                 });
             }
             '/' => {
                 tokens.push(Token {
                     value: "/".to_string(),
                     kind: Slash,
+                    line,
                 });
             }
             _ => {
                 has_error = true;
                 tokens.push(Token {
                     value: "".to_string(),
-                    kind: Error(line, format!("Unexpected character: {}", current_char)),
+                    kind: Error(
+                        line as u64,
+                        format!("Unexpected character: {}", current_char),
+                    ),
+                    line,
                 });
             }
         }
@@ -615,12 +638,14 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
         has_error = true;
         tokens.push(Token {
             value: "".to_string(),
-            kind: Error(line, "Unterminated string.".to_string()),
+            kind: Error(line as u64, "Unterminated string.".to_string()),
+            line,
         });
     }
     tokens.push(Token {
         value: "EOF".to_string(),
         kind: Eof,
+        line,
     });
     if has_error {
         for token in tokens {
