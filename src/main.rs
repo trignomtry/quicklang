@@ -399,6 +399,7 @@ fn main() {
             if let Ok(p) = res {
                 println!("{}", p.print());
             } else if let Err(e) = res {
+                println!();
                 println!("{}", e);
                 std::process::exit(65);
             }
