@@ -649,7 +649,8 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     });
     if has_error {
         for token in tokens {
-            if let TokenKind::Error(_, _) = token.kind {
+            if let TokenKind::Eof = token.kind {
+            } else {
                 token.print();
             }
         }
