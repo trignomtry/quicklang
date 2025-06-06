@@ -371,7 +371,6 @@ fn main() {
             for token in tokens {
                 token.print();
             }
-            println!("EOF  null");
         }
         "parse" => {
             let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
