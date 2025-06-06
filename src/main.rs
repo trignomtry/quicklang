@@ -14,7 +14,7 @@ impl Token {
         let token = self;
         if let Error(_, _) = token.kind {
             eprintln!("{}{}", token.kind, token.value);
-        } else if token.kind == Str {
+        } else if let Str(_) = token.kind {
             println!("{} \"{}\" {}", token.kind, token.value, token.value);
         } else if let Eof = token.kind {
             println!("EOF  null");
@@ -52,7 +52,7 @@ enum TokenKind {
     Greater,
     GreaterEqual,
     Slash,
-    Str,
+    Str(String),
     Identifier,
     And,
     Class,
@@ -88,9 +88,11 @@ impl Expr {
         match self {
             Expr::Literal(k) => match k {
                 TokenKind::Number(n) => format!("{:?}", n),
+                TokenKind::Str(o) => o.into(),
                 TokenKind::True => "true".into(),
                 TokenKind::False => "false".into(),
                 TokenKind::Nil => "nil".into(),
+
                 _ => "<bad lit>".into(),
             },
             Expr::Unary(op, right) => parenthesize(&op.value, &[right]),
@@ -197,9 +199,14 @@ impl Parser {
             return Ok(Expr::Literal(TokenKind::Nil));
         }
 
-        if let TokenKind::Number(n) = self.peek_kind().clone() {
+        let pekd = self.peek().clone();
+
+        if let TokenKind::Number(n) = pekd.kind {
             self.advance();
             return Ok(Expr::Literal(TokenKind::Number(n)));
+        } else if let TokenKind::Str(o) = &pekd.kind {
+            self.advance();
+            return Ok(Expr::Literal(TokenKind::Str(o.into())));
         }
 
         if self.match_kind(TokenKind::LParen) {
@@ -283,7 +290,7 @@ impl Display for TokenKind {
             Self::Greater => "GREATER",
             Self::GreaterEqual => "GREATER_EQUAL",
             Self::Slash => "SLASH",
-            Self::Str => "STRING",
+            Self::Str(_) => "STRING",
             Self::Number(_) => "NUMBER",
             Self::Identifier => "IDENTIFIER",
             Self::And => "AND",
@@ -438,7 +445,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             } else {
                 tokens.push(Token {
                     value: in_string.clone().unwrap(),
-                    kind: Str,
+                    kind: Str(in_string.clone().unwrap()),
                 });
                 in_string = None;
             }
