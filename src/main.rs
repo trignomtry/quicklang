@@ -604,7 +604,6 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
         index += 1;
     }
 
-    // Handle unterminated string
     if in_string.is_some() {
         has_error = true;
         tokens.push(Token {
@@ -617,6 +616,9 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
         kind: Eof,
     });
     if has_error {
+        for token in tokens {
+            token.print();
+        }
         std::process::exit(65);
     } else {
         tokens.clone()
