@@ -16,6 +16,8 @@ impl Token {
             eprintln!("{}{}", token.kind, token.value);
         } else if token.kind == Str {
             println!("{} \"{}\" {}", token.kind, token.value, token.value);
+        } else if let Eof = token.kind {
+            println!("EOF  null");
         } else if let Number(_) = token.kind {
             println!(
                 "{} {} {}",
@@ -82,7 +84,7 @@ enum Expr {
 }
 
 impl Expr {
-    pub fn print(&self) -> String {
+    fn print(&self) -> String {
         match self {
             Expr::Literal(k) => match k {
                 TokenKind::Number(n) => format!("{}", n),
@@ -106,18 +108,18 @@ fn parenthesize(name: &str, exprs: &[&Expr]) -> String {
     format!("({} {})", name, inner)
 }
 
-pub struct Parser {
+struct Parser {
     tokens: Vec<Token>,
     current: usize, // index into `tokens`
 }
 
 impl Parser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    fn new(tokens: Vec<Token>) -> Self {
         Self { tokens, current: 0 }
     }
 
     // ───── entry point ─────
-    pub fn parse(&mut self) -> Result<Expr, String> {
+    fn parse(&mut self) -> Result<Expr, String> {
         self.expression()
     }
 
@@ -195,7 +197,7 @@ impl Parser {
             return Ok(Expr::Literal(TokenKind::Nil));
         }
 
-        if let (TokenKind::Number(n)) = self.peek_kind().clone() {
+        if let TokenKind::Number(n) = self.peek_kind().clone() {
             self.advance();
             return Ok(Expr::Literal(TokenKind::Number(n)));
         }
