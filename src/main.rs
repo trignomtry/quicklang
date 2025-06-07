@@ -391,7 +391,6 @@ fn main() {
             let mut parser = Parser::new(tokens);
             let res = parser.parse();
             if let Ok(p) = res {
-                println!("Almmm  {:?}", p);
                 println!("{}", p.print());
             } else if let Err(e) = res {
                 eprintln!("{}", e);
