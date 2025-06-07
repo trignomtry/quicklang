@@ -391,6 +391,7 @@ fn main() {
             let mut parser = Parser::new(tokens);
             let res = parser.parse();
             if let Ok(p) = res {
+                println!("Almmm  {:?}", p);
                 println!("{}", p.print());
             } else if let Err(e) = res {
                 eprintln!("{}", e);
@@ -649,10 +650,7 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     });
     if has_error {
         for token in tokens {
-            if let TokenKind::Eof = token.kind {
-            } else {
-                token.print();
-            }
+            token.print();
         }
         std::process::exit(65);
     } else {
