@@ -263,8 +263,17 @@ impl Parser {
     fn is_at_end(&self) -> bool {
         matches!(self.peek().kind, TokenKind::Eof)
     }
-    fn peek(&self) -> &Token {
-        &self.tokens[self.current]
+    fn peek(&self) -> Token {
+        if self.current < self.tokens.len() {
+            self.tokens[self.current].clone()
+        } else {
+            let wow = Token {
+                kind: Eof,
+                value: "".into(),
+                line: self.previous().line,
+            };
+            wow
+        }
     }
     fn previous(&self) -> &Token {
         &self.tokens[self.current - 1]
