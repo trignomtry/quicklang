@@ -642,6 +642,13 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             line,
         });
     }
+    if tokens.len() > 1 {
+        tokens.push(Token {
+            value: "EOF".to_string(),
+            kind: Eof,
+            line,
+        });
+    }
 
     if has_error {
         for token in tokens {
@@ -649,11 +656,6 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
         }
         std::process::exit(65);
     } else {
-        tokens.push(Token {
-            value: "EOF".to_string(),
-            kind: Eof,
-            line,
-        });
         tokens.clone()
     }
 }
