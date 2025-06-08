@@ -651,11 +651,13 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             line,
         });
     }
-    tokens.push(Token {
-        value: "EOF".to_string(),
-        kind: Eof,
-        line,
-    });
+    if tokens.len() > 1 || !has_error {
+        tokens.push(Token {
+            value: "EOF".to_string(),
+            kind: Eof,
+            line,
+        });
+    }
 
     if has_error {
         for token in tokens {
