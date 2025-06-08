@@ -387,6 +387,13 @@ fn main() {
                 std::string::String::new()
             });
             let tokens = tokenize(file_contents.chars().collect());
+            let has_error = tokens.iter().any(|t| matches!(t.kind, Error(_, _)));
+            if has_error {
+                for token in tokens {
+                    token.print();
+                }
+                std::process::exit(65);
+            }
             for token in tokens {
                 token.print();
             }
@@ -397,13 +404,24 @@ fn main() {
                 std::string::String::new()
             });
             let tokens = tokenize(file_contents.chars().collect());
-            let mut parser = Parser::new(tokens);
-            let res = parser.parse();
-            if let Ok(p) = res {
-                println!("{}", p.print());
-            } else if let Err(e) = res {
-                eprintln!("{}", e);
+            // Lexical error check
+            if let Some(_) = tokens.iter().find(|t| matches!(t.kind, Error(_, _))) {
+                for t in tokens {
+                    if let Error(_, _) = t.kind {
+                        t.print();
+                    }
+                }
                 std::process::exit(65);
+            }
+            let mut parser = Parser::new(tokens);
+            match parser.parse() {
+                Ok(p) => {
+                    println!("{}", p.print());
+                }
+                Err(e) => {
+                    eprintln!("{}", e);
+                    std::process::exit(65);
+                }
             }
         }
         _ => {
@@ -659,12 +677,5 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     });
     // }
 
-    if has_error {
-        for token in tokens {
-            token.print();
-        }
-        std::process::exit(65);
-    } else {
-        tokens.clone()
-    }
+    tokens
 }
