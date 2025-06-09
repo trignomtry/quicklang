@@ -832,7 +832,7 @@ fn eval(ex: Expr) -> TokenKind {
                 Minus => {
                     if let Number(left_num) = left {
                         if let Number(right_num) = right {
-                            Number(left_num + right_num)
+                            Number(left_num - right_num)
                         } else {
                             eprintln!(
                                 "We haven't supported subtracting {} from {} yet",
