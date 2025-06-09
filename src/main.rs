@@ -280,6 +280,100 @@ impl Parser {
     }
 }
 
+impl TokenKind {
+    fn type_name(&self) -> String {
+        let s = match self {
+            Self::LParen => "LEFT_PAREN",
+            Self::RParen => "RIGHT_PAREN",
+            Self::LBrace => "LEFT_BRACE",
+            Self::RBrace => "RIGHT_BRACE",
+            Self::Star => "STAR",
+            Self::Dot => "DOT",
+            Self::Comma => "COMMA",
+            Self::Plus => "PLUS",
+            Self::Minus => "MINUS",
+            Self::Semicolon => "SEMICOLON",
+            Self::Equal => "EQUAL",
+            Self::EqualEqual => "EQUAL_EQUAL",
+            Self::Bang => "BANG",
+            Self::BangEqual => "BANG_EQUAL",
+            Self::Less => "LESS",
+            Self::LessEqual => "LESS_EQUAL",
+            Self::Greater => "GREATER",
+            Self::GreaterEqual => "GREATER_EQUAL",
+            Self::Slash => "SLASH",
+            Self::Str(_) => "STRING",
+            Self::Number(_) => "NUMBER",
+            Self::Identifier(_) => "IDENTIFIER",
+            Self::And => "AND",
+            Self::Class => "CLASS",
+            Self::Else => "ELSE",
+            Self::False => "FALSE",
+            Self::For => "FOR",
+            Self::Fun => "FUN",
+            Self::If => "IF",
+            Self::Nil => "NIL",
+            Self::Or => "OR",
+            Self::Print => "PRINT",
+            Self::Return => "RETURN",
+            Self::Super => "SUPER",
+            Self::This => "THIS",
+            Self::True => "TRUE",
+            Self::Var => "VAR",
+            Self::While => "WHILE",
+            Self::Eof => "EOF",
+            Self::Error(line, error) => &format!("[line {}] Error: {}", line, error),
+        };
+        s.to_string()
+    }
+    fn value(&self) -> String {
+        match self {
+            Self::LParen => "(".to_string(),
+            Self::RParen => ")".to_string(),
+            Self::LBrace => "[".to_string(),
+            Self::RBrace => "]".to_string(),
+            Self::Star => "*".to_string(),
+            Self::Dot => ".".to_string(),
+            Self::Comma => ",".to_string(),
+            Self::Plus => "+".to_string(),
+            Self::Minus => "-".to_string(),
+            Self::Semicolon => ";".to_string(),
+            Self::Equal => "=".to_string(),
+            Self::EqualEqual => "==".to_string(),
+            Self::Bang => "!".to_string(),
+            Self::BangEqual => "!=".to_string(),
+            Self::Less => "<".to_string(),
+            Self::LessEqual => "<=".to_string(),
+            Self::Greater => ">".to_string(),
+            Self::GreaterEqual => ">=".to_string(),
+            Self::Slash => "/".to_string(),
+            Self::Str(s) => s.clone(),
+            Self::Number(num) => num.to_string(),
+            Self::Identifier(i) => i.clone(),
+            Self::And => "&".to_string(),
+            Self::Class => "class".to_string(),
+            Self::Else => "else".to_string(),
+            Self::False => "false".to_string(),
+            Self::For => "for".to_string(),
+            Self::Fun => "fun".to_string(),
+            Self::If => "if".to_string(),
+            Self::Nil => "nil".to_string(),
+            Self::Or => "|".to_string(),
+            Self::Print => "print".to_string(),
+            Self::Return => "return".to_string(),
+            Self::Super => "super".to_string(),
+            Self::This => "this".to_string(),
+            Self::True => "true".to_string(),
+            Self::Var => "var".to_string(),
+            Self::While => "while".to_string(),
+            Self::Eof => "".to_string(),
+            Self::Error(line, error) => {
+                format!("[line {}] Error: {}", line, error)
+            }
+        }
+    }
+}
+
 impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
@@ -405,7 +499,7 @@ fn main() {
             });
             let tokens = tokenize(file_contents.chars().collect());
             // Lexical error check
-            if let Some(_) = tokens.iter().find(|t| matches!(t.kind, Error(_, _))) {
+            if tokens.iter().any(|t| matches!(t.kind, Error(_, _))) {
                 for t in tokens {
                     if let Error(_, _) = t.kind {
                         t.print();
@@ -417,6 +511,32 @@ fn main() {
             match parser.parse() {
                 Ok(p) => {
                     println!("{}", p.print());
+                }
+                Err(e) => {
+                    eprintln!("{}", e);
+                    std::process::exit(65);
+                }
+            }
+        }
+        "evaluate" => {
+            let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
+                eprintln!("Failed to read file {}", filename);
+                std::string::String::new()
+            });
+            let tokens = tokenize(file_contents.chars().collect());
+            // Lexical error check
+            if tokens.iter().any(|t| matches!(t.kind, Error(_, _))) {
+                for t in tokens {
+                    if let Error(_, _) = t.kind {
+                        t.print();
+                    }
+                }
+                std::process::exit(65);
+            }
+            let mut parser = Parser::new(tokens);
+            match parser.parse() {
+                Ok(p) => {
+                    println!("{}", eval(p).value());
                 }
                 Err(e) => {
                     eprintln!("{}", e);
@@ -443,7 +563,6 @@ fn format_float(lexeme: &str) -> String {
 }
 
 fn tokenize(chars: Vec<char>) -> Vec<Token> {
-    let mut has_error = false;
     let mut is_commented = false;
     let mut in_string: Option<std::string::String> = None;
 
@@ -647,7 +766,6 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
                 });
             }
             _ => {
-                has_error = true;
                 tokens.push(Token {
                     value: "".to_string(),
                     kind: Error(
@@ -662,7 +780,6 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     }
 
     if in_string.is_some() {
-        has_error = true;
         tokens.push(Token {
             value: "".to_string(),
             kind: Error(line as u64, "Unterminated string.".to_string()),
@@ -678,4 +795,63 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     // }
 
     tokens
+}
+
+fn eval(ex: Expr) -> TokenKind {
+    match ex {
+        Expr::Literal(l) => l,
+
+        Expr::Binary(l, o, r) => {
+            let left = eval(*l);
+            let right = eval(*r);
+            match o.kind {
+                Plus => match left {
+                    Str(left_str) => match right {
+                        Str(right_str) => Str(format!("{}{}", left_str, right_str)),
+                        Number(right_num) => Str(format!("{}{}", left_str, right_num)),
+                        Identifier(_) => todo!("to implement adding identifiers"),
+                        l => todo!("This is not supported yet: {}", l),
+                    },
+                    Number(left_num) => {
+                        if let Number(right_num) = right {
+                            Number(left_num + right_num)
+                        } else {
+                            eprintln!("Type Error: Cannot add a number to anything but a number");
+                            std::process::exit(65);
+                        }
+                    }
+                    Identifier(_left_ident) => {
+                        eprintln!("We havent supported adding variables yet...");
+                        std::process::exit(65);
+                    }
+                    l => {
+                        eprintln!("We haven't supported adding {} and {} yet", l, right);
+                        std::process::exit(65);
+                    }
+                },
+                Minus => {
+                    if let Number(left_num) = left {
+                        if let Number(right_num) = right {
+                            Number(left_num + right_num)
+                        } else {
+                            eprintln!(
+                                "We haven't supported subtracting {} from {} yet",
+                                right, left_num
+                            );
+                            std::process::exit(65);
+                        }
+                    } else {
+                        eprintln!(
+                            "We haven't supported subtracting {} from {} yet",
+                            right, left
+                        );
+                        std::process::exit(65);
+                    }
+                }
+                _ => todo!(),
+            }
+        }
+
+        l => todo!("{:?}", l),
+    }
 }
