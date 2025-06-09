@@ -1002,7 +1002,8 @@ fn eval(ex: Expr) -> TokenKind {
                 if let Number(num) = eval(other_val.clone()) {
                     Number(num * -1.0)
                 } else {
-                    todo!("Idk what this is again {:?}{:?}", tolk, other_val);
+                    eprintln!("Operand must be a number.");
+                    std::process::exit(70);
                 }
             } else if let Bang = tolk.kind {
                 let evald = eval(*val);
