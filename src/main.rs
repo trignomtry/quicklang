@@ -858,10 +858,19 @@ fn eval(ex: Expr) -> TokenKind {
                 if let Number(num) = eval(other_val.clone()) {
                     Number(num * -1.0)
                 } else {
-                    todo!("Idk wtf this is again {:?}{:?}", tolk, other_val);
+                    todo!("Idk what this is again {:?}{:?}", tolk, other_val);
+                }
+            } else if let Bang = tolk.kind {
+                let evald = eval(*val);
+                if let True = evald {
+                    False
+                } else if let False = evald {
+                    True
+                } else {
+                    todo!("Idk what this is  {:?}{:?}", tolk, evald);
                 }
             } else {
-                todo!("Idk wtf this is {:?}{:?}", tolk, val);
+                todo!("Idk wth this is {:?}{:?}", tolk, val);
             }
         }
         l => todo!("{:?}", l),
