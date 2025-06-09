@@ -131,11 +131,6 @@ impl Parser {
 
     fn statement(&mut self) -> Result<Stmt, String> {
         let mut prgm = vec![];
-        if self.current != 0 {
-            println!("peek: {:?}; prev: {:?}", self.peek(), self.previous());
-        } else {
-            println!("peek: {:?}; prev: None", self.peek());
-        }
         while !self.is_at_end() {
             if self.match_kind(TokenKind::Print) {
                 let expr = self.expression()?;
