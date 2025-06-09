@@ -848,7 +848,26 @@ fn eval(ex: Expr) -> TokenKind {
                         std::process::exit(65);
                     }
                 }
-                _ => todo!(),
+                Star => {
+                    if let Number(left_num) = left {
+                        if let Number(right_num) = right {
+                            Number(left_num * right_num)
+                        } else {
+                            eprintln!(
+                                "We haven't supported subtracting {} from {} yet",
+                                right, left_num
+                            );
+                            std::process::exit(65);
+                        }
+                    } else {
+                        eprintln!(
+                            "We haven't supported subtracting {} from {} yet",
+                            right, left
+                        );
+                        std::process::exit(65);
+                    }
+                }
+                l => todo!("{l}"),
             }
         }
         Expr::Grouping(val) => eval(*val),
