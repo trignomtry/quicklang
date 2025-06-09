@@ -851,7 +851,7 @@ fn eval(ex: Expr) -> TokenKind {
                 _ => todo!(),
             }
         }
-
+        Expr::Grouping(val) => eval(*val),
         l => todo!("{:?}", l),
     }
 }
