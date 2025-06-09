@@ -640,13 +640,6 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             continue;
         }
 
-        // Handle newlines
-        if current_char == '\n' {
-            line += 1;
-            index += 1;
-            continue;
-        }
-
         // Handle strings
         if current_char == '"' {
             if in_string.is_none() {
@@ -663,6 +656,13 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
             continue;
         } else if let Some(ref mut s) = in_string {
             s.push(current_char);
+            index += 1;
+            continue;
+        }
+
+        // Handle newlines
+        if current_char == '\n' {
+            line += 1;
             index += 1;
             continue;
         }

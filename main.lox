@@ -1,2 +1,14 @@
-print "hello world";
-print 42;
+print false != false;
+
+// multi-line strings should be supported
+print "40
+35
+67
+";
+
+print "There should be an empty line above this.";
+
+print "(" + "" + ")";
+
+// non-ascii characters should be supported
+print "non-ascii: ॐ";
