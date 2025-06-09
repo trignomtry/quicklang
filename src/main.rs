@@ -112,6 +112,7 @@ fn parenthesize(name: &str, exprs: &[&Expr]) -> String {
 }
 
 enum Stmt {
+    Program(Vec<Stmt>),
     Print(Expr),
     Expression(Expr),
 }
@@ -129,15 +130,24 @@ impl Parser {
     // ───── entry point ─────
 
     fn statement(&mut self) -> Result<Stmt, String> {
-        if self.match_kind(TokenKind::Print) {
-            let expr = self.expression()?;
-            self.consume(TokenKind::Semicolon, "Expect ';' after value.")?;
-            Ok(Stmt::Print(expr))
+        let mut prgm = vec![];
+        if self.current != 0 {
+            println!("peek: {:?}; prev: {:?}", self.peek(), self.previous());
         } else {
-            let expr = self.expression()?;
-            self.consume(TokenKind::Semicolon, "Expect ';' after expression.")?;
-            Ok(Stmt::Expression(expr))
+            println!("peek: {:?}; prev: None", self.peek());
         }
+        while !self.is_at_end() {
+            if self.match_kind(TokenKind::Print) {
+                let expr = self.expression()?;
+                self.consume(TokenKind::Semicolon, "Expect ';' after value.")?;
+                prgm.push(Stmt::Print(expr))
+            } else {
+                let expr = self.expression()?;
+                self.consume(TokenKind::Semicolon, "Expect ';' after expression.")?;
+                prgm.push(Stmt::Expression(expr))
+            }
+        }
+        Ok(Stmt::Program(prgm))
     }
 
     fn parse(&mut self) -> Result<Expr, String> {
@@ -542,7 +552,6 @@ fn main() {
                 std::string::String::new()
             });
             let tokens = tokenize(file_contents.chars().collect());
-            // Lexical error check
             if tokens.iter().any(|t| matches!(t.kind, Error(_, _))) {
                 for t in tokens {
                     if let Error(_, _) = t.kind {
@@ -578,11 +587,19 @@ fn main() {
                 std::process::exit(65);
             }
             let mut parser = Parser::new(tokens);
-            match parser.statement() {
-                Ok(p) => match p {
+            fn run(p: Stmt) {
+                match p {
+                    Stmt::Program(v) => {
+                        for ex in v {
+                            run(ex);
+                        }
+                    }
                     Stmt::Print(e) => println!("{}", eval(e).value()),
                     Stmt::Expression(e) => {}
-                },
+                }
+            }
+            match parser.statement() {
+                Ok(p) => run(p),
                 Err(e) => {
                     eprintln!("{}", e);
                     std::process::exit(65);
