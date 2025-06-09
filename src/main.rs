@@ -817,16 +817,16 @@ fn eval(ex: Expr) -> TokenKind {
                             Number(left_num + right_num)
                         } else {
                             eprintln!("Type Error: Cannot add a number to anything but a number");
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     }
                     Identifier(_left_ident) => {
                         eprintln!("We havent supported adding variables yet...");
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                     l => {
                         eprintln!("We haven't supported adding {} and {} yet", l, right);
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 },
                 Minus => {
@@ -838,14 +838,14 @@ fn eval(ex: Expr) -> TokenKind {
                                 "We haven't supported subtracting {} from {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
                         eprintln!(
                             "We haven't supported subtracting {} from {} yet",
                             right, left
                         );
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 }
                 Star => {
@@ -854,17 +854,17 @@ fn eval(ex: Expr) -> TokenKind {
                             Number(left_num * right_num)
                         } else {
                             eprintln!(
-                                "We haven't supported subtracting {} from {} yet",
+                                "We haven't supported multiplying {} and {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
                         eprintln!(
-                            "We haven't supported subtracting {} from {} yet",
+                            "We haven't supported multiplying {} and {} yet",
                             right, left
                         );
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 }
                 Slash => {
@@ -873,17 +873,14 @@ fn eval(ex: Expr) -> TokenKind {
                             Number(left_num / right_num)
                         } else {
                             eprintln!(
-                                "We haven't supported subtracting {} from {} yet",
+                                "We haven't supported dividing {} by {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
-                        eprintln!(
-                            "We haven't supported subtracting {} from {} yet",
-                            right, left
-                        );
-                        std::process::exit(65);
+                        eprintln!("We haven't supported dividing {} from {} yet", right, left);
+                        std::process::exit(70);
                     }
                 }
                 Greater => {
@@ -896,17 +893,17 @@ fn eval(ex: Expr) -> TokenKind {
                             }
                         } else {
                             eprintln!(
-                                "We haven't supported subtracting {} from {} yet",
+                                "We haven't supported coprarisons of {} and {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
                         eprintln!(
-                            "We haven't supported subtracting {} from {} yet",
+                            "We haven't supported coprarisons of {} and {} yet",
                             right, left
                         );
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 }
                 Less => {
@@ -919,17 +916,17 @@ fn eval(ex: Expr) -> TokenKind {
                             }
                         } else {
                             eprintln!(
-                                "We haven't supported subtracting {} from {} yet",
+                                "We haven't supported coprarisons of {} and {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
                         eprintln!(
-                            "We haven't supported subtracting {} from {} yet",
+                            "We haven't supported coprarisons of {} and {} yet",
                             right, left
                         );
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 }
                 GreaterEqual => {
@@ -942,17 +939,17 @@ fn eval(ex: Expr) -> TokenKind {
                             }
                         } else {
                             eprintln!(
-                                "We haven't supported subtracting {} from {} yet",
+                                "We haven't supported coprarisons of {} and {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
                         eprintln!(
-                            "We haven't supported subtracting {} from {} yet",
+                            "We haven't supported coprarisons of {} and {} yet",
                             right, left
                         );
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 }
                 LessEqual => {
@@ -965,17 +962,17 @@ fn eval(ex: Expr) -> TokenKind {
                             }
                         } else {
                             eprintln!(
-                                "We haven't supported subtracting {} from {} yet",
+                                "We haven't supported coprarisons of {} and {} yet",
                                 right, left_num
                             );
-                            std::process::exit(65);
+                            std::process::exit(70);
                         }
                     } else {
                         eprintln!(
-                            "We haven't supported subtracting {} from {} yet",
+                            "We haven't supported coprarisons of {} and {} yet",
                             right, left
                         );
-                        std::process::exit(65);
+                        std::process::exit(70);
                     }
                 }
                 EqualEqual => {
