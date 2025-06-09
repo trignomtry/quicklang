@@ -1003,6 +1003,7 @@ fn eval(ex: Expr) -> TokenKind {
                     Number(num * -1.0)
                 } else {
                     eprintln!("Operand must be a number.");
+
                     std::process::exit(70);
                 }
             } else if let Bang = tolk.kind {
