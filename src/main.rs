@@ -868,6 +868,8 @@ fn eval(ex: Expr) -> TokenKind {
                     True
                 } else if let Nil = evald {
                     True
+                } else if let Number(_) = evald {
+                    False
                 } else {
                     todo!("Idk what this is  {:?}{:?}", tolk, evald);
                 }
