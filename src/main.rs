@@ -810,7 +810,10 @@ fn eval(ex: Expr) -> TokenKind {
                         Str(right_str) => Str(format!("{}{}", left_str, right_str)),
                         Number(right_num) => Str(format!("{}{}", left_str, right_num)),
                         Identifier(_) => todo!("to implement adding identifiers"),
-                        l => todo!("This is not supported yet: {}", l),
+                        _ => {
+                            eprintln!("Adding must be two numbers or two strings");
+                            std::process::exit(70);
+                        }
                     },
                     Number(left_num) => {
                         if let Number(right_num) = right {
@@ -1020,6 +1023,5 @@ fn eval(ex: Expr) -> TokenKind {
                 todo!("Idk wth this is {:?}{:?}", tolk, val);
             }
         }
-        l => todo!("{:?}", l),
     }
 }
