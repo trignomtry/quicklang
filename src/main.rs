@@ -978,6 +978,20 @@ fn eval(ex: Expr) -> TokenKind {
                         std::process::exit(65);
                     }
                 }
+                EqualEqual => {
+                    if left == right {
+                        True
+                    } else {
+                        False
+                    }
+                }
+                BangEqual => {
+                    if left != right {
+                        True
+                    } else {
+                        False
+                    }
+                }
                 l => todo!("{l}"),
             }
         }
