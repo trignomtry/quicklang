@@ -76,7 +76,7 @@ enum TokenKind {
     Error(u64, std::string::String),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Expr {
     Literal(TokenKind),
     Unary(Token, Box<Expr>),
@@ -852,6 +852,18 @@ fn eval(ex: Expr) -> TokenKind {
             }
         }
         Expr::Grouping(val) => eval(*val),
+        Expr::Unary(tolk, val) => {
+            if let Minus = tolk.kind {
+                let other_val = *val;
+                if let Number(num) = eval(other_val.clone()) {
+                    Number(num * -1.0)
+                } else {
+                    todo!("Idk wtf this is again {:?}{:?}", tolk, other_val);
+                }
+            } else {
+                todo!("Idk wtf this is {:?}{:?}", tolk, val);
+            }
+        }
         l => todo!("{:?}", l),
     }
 }
