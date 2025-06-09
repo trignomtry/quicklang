@@ -590,7 +590,9 @@ fn main() {
                         }
                     }
                     Stmt::Print(e) => println!("{}", eval(e).value()),
-                    Stmt::Expression(e) => {}
+                    Stmt::Expression(e) => {
+                        eval(e);
+                    }
                 }
             }
             match parser.statement() {
