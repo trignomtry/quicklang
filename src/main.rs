@@ -111,6 +111,11 @@ fn parenthesize(name: &str, exprs: &[&Expr]) -> String {
     format!("({} {})", name, inner)
 }
 
+enum Stmt {
+    Print(Expr),
+    Expression(Expr),
+}
+
 struct Parser {
     tokens: Vec<Token>,
     current: usize, // index into `tokens`
@@ -122,6 +127,19 @@ impl Parser {
     }
 
     // ───── entry point ─────
+
+    fn statement(&mut self) -> Result<Stmt, String> {
+        if self.match_kind(TokenKind::Print) {
+            let expr = self.expression()?;
+            self.consume(TokenKind::Semicolon, "Expect ';' after value.")?;
+            Ok(Stmt::Print(expr))
+        } else {
+            let expr = self.expression()?;
+            self.consume(TokenKind::Semicolon, "Expect ';' after expression.")?;
+            Ok(Stmt::Expression(expr))
+        }
+    }
+
     fn parse(&mut self) -> Result<Expr, String> {
         self.expression()
     }
@@ -538,6 +556,33 @@ fn main() {
                 Ok(p) => {
                     println!("{}", eval(p).value());
                 }
+                Err(e) => {
+                    eprintln!("{}", e);
+                    std::process::exit(65);
+                }
+            }
+        }
+        "run" => {
+            let file_contents = fs::read_to_string(filename).unwrap_or_else(|_| {
+                eprintln!("Failed to read file {}", filename);
+                std::string::String::new()
+            });
+            let tokens = tokenize(file_contents.chars().collect());
+            // Lexical error check
+            if tokens.iter().any(|t| matches!(t.kind, Error(_, _))) {
+                for t in tokens {
+                    if let Error(_, _) = t.kind {
+                        t.print();
+                    }
+                }
+                std::process::exit(65);
+            }
+            let mut parser = Parser::new(tokens);
+            match parser.statement() {
+                Ok(p) => match p {
+                    Stmt::Print(e) => println!("{}", eval(e).value()),
+                    Stmt::Expression(e) => {}
+                },
                 Err(e) => {
                     eprintln!("{}", e);
                     std::process::exit(65);
