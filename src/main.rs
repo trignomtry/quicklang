@@ -1,4 +1,5 @@
 use crate::TokenKind::*;
+use std::collections::HashMap;
 use std::env;
 use std::fmt::Display;
 use std::fs;
@@ -117,6 +118,57 @@ enum Stmt {
     Expression(Expr),
 }
 
+#[derive(Clone)]
+enum Value {
+    Number(f64),
+    Str(String),
+    Object(HashMap<String, Value>),
+    Bool(bool),
+    Nil,
+}
+
+impl Value {
+    fn value(&self) -> String {
+        match self {
+            Value::Number(n) => n.to_string(),
+            Value::Str(s) => s.to_string(),
+            Value::Object(o) => format!(
+                "{{{}}}",
+                o.iter()
+                    .map(move |(k, v)| format!("\"{}\": {}", k, v.value()))
+                    .collect::<Vec<String>>()
+                    .join(", ")
+            ),
+            Value::Nil => "nil".to_string(),
+            Value::Bool(b) => b.to_string(),
+        }
+    }
+    fn to_token_kind(&self) -> TokenKind {
+        match self {
+            Value::Str(r) => Str(r.to_string()),
+            Value::Number(n) => Number(*n),
+            Value::Bool(b) => {
+                if *b {
+                    True
+                } else {
+                    False
+                }
+            }
+            Value::Nil => Nil,
+            Value::Object(_) => {
+                eprintln!("Adding anything to an object is not supported");
+                std::process::exit(70);
+            }
+        }
+    }
+}
+
+#[derive(Default)]
+struct Context {
+    stack: Vec<Value>,
+    variables: HashMap<String, Value>,
+}
+
 struct Parser {
     tokens: Vec<Token>,
     current: usize, // index into `tokens`
@@ -129,20 +181,74 @@ impl Parser {
 
     // ───── entry point ─────
 
-    fn statement(&mut self) -> Result<Stmt, String> {
+    fn statement(&mut self) -> Result<Vec<Box<dyn FnMut(&mut Context) -> Value>>, String> {
         let mut prgm = vec![];
         while !self.is_at_end() {
             if self.match_kind(TokenKind::Print) {
                 let expr = self.expression()?;
                 self.consume(TokenKind::Semicolon, "Expect ';' after value.")?;
-                prgm.push(Stmt::Print(expr))
+                let func: Box<dyn FnMut(&mut Context) -> Value> =
+                    if let Expr::Literal(Identifier(l)) = expr.clone() {
+                        Box::new(move |ctx| {
+                            let v = resolve(l.to_string(), ctx);
+                            println!("{}", v.value());
+                            Value::Nil
+                        })
+                    } else {
+                        Box::new(move |ctx| {
+                            println!("{}", eval(expr.clone(), &ctx).value());
+                            Value::Nil
+                        })
+                    };
+                prgm.push(func);
+            } else if self.match_kind(TokenKind::Var) {
+                let var_name = if !self.is_at_end() {
+                    if let Identifier(n) = self.peek().kind {
+                        self.advance();
+                        n
+                    } else {
+                        eprintln!("Expected a variable name after '='");
+                        std::process::exit(70)
+                    }
+                } else {
+                    eprintln!("Expected a variable name after '='");
+                    std::process::exit(70)
+                };
+                if self.match_kind(TokenKind::Equal) {
+                    let expr = self.expression()?;
+
+                    let func: Box<dyn FnMut(&mut Context) -> Value> = Box::new(move |ctx| {
+                        let expr = match eval(expr.clone(), &ctx) {
+                            TokenKind::Str(s) => Value::Str(s),
+                            TokenKind::Number(f) => Value::Number(f),
+                            TokenKind::Identifier(s) => match ctx.variables.get(&s) {
+                                Some(r) => r.to_owned(),
+                                None => Value::Nil,
+                            },
+                            TokenKind::True => Value::Bool(true),
+                            TokenKind::False => Value::Bool(false),
+                            TokenKind::Nil => Value::Nil,
+                            l => {
+                                eprintln!("Variable value is not a valid value: {l}");
+                                Value::Nil
+                            }
+                        };
+                        ctx.variables.insert(var_name.clone(), expr);
+                        Value::Nil
+                    });
+                    prgm.push(func);
+                    self.consume(Semicolon, "Expected a semicolon after variable declaration")?;
+                } else {
+                    eprintln!("Expected '=' after 'var'");
+                    std::process::exit(70);
+                }
             } else {
                 let expr = self.expression()?;
                 self.consume(TokenKind::Semicolon, "Expect ';' after expression.")?;
-                prgm.push(Stmt::Expression(expr))
+                eval(expr, &Context::default());
             }
         }
-        Ok(Stmt::Program(prgm))
+        Ok(prgm)
     }
 
     fn parse(&mut self) -> Result<Expr, String> {
@@ -558,7 +664,7 @@ fn main() {
             let mut parser = Parser::new(tokens);
             match parser.parse() {
                 Ok(p) => {
-                    println!("{}", eval(p).value());
+                    println!("{}", eval(p, &Context::default()).value());
                 }
                 Err(e) => {
                     eprintln!("{}", e);
@@ -582,21 +688,16 @@ fn main() {
                 std::process::exit(65);
             }
             let mut parser = Parser::new(tokens);
-            fn run(p: Stmt) {
-                match p {
-                    Stmt::Program(v) => {
-                        for ex in v {
-                            run(ex);
-                        }
-                    }
-                    Stmt::Print(e) => println!("{}", eval(e).value()),
-                    Stmt::Expression(e) => {
-                        eval(e);
+            let mut ctx = Context {
+                stack: vec![],
+                variables: HashMap::new(),
+            };
+            match parser.statement() {
+                Ok(mut p) => {
+                    for fun in p.iter_mut() {
+                        fun(&mut ctx);
                     }
                 }
-            }
-            match parser.statement() {
-                Ok(p) => run(p),
                 Err(e) => {
                     eprintln!("{}", e);
                     std::process::exit(65);
@@ -856,18 +957,32 @@ fn tokenize(chars: Vec<char>) -> Vec<Token> {
     tokens
 }
 
-fn eval(ex: Expr) -> TokenKind {
+fn eval(ex: Expr, ctx: &Context) -> TokenKind {
     match ex {
         Expr::Literal(l) => l,
 
         Expr::Binary(l, o, r) => {
-            let left = eval(*l);
-            let right = eval(*r);
+            let left = eval(*l.clone(), ctx);
+            let right = eval(*r.clone(), ctx);
             match o.kind {
                 Plus => match left {
-                    Str(left_str) => match right {
+                    Str(ref left_str) => match right {
                         Str(right_str) => Str(format!("{}{}", left_str, right_str)),
                         Number(right_num) => Str(format!("{}{}", left_str, right_num)),
+                        Identifier(right_ident) => match ctx.variables.get(&right_ident) {
+                            Some(r) => eval(
+                                Expr::Binary(
+                                    Box::new(Expr::Literal(left)),
+                                    o,
+                                    Box::new(Expr::Literal(r.to_token_kind())),
+                                ),
+                                ctx,
+                            ),
+                            None => {
+                                eprintln!("Variable \"{right_ident}\" not found.");
+                                std::process::exit(70);
+                            }
+                        },
                         Identifier(_) => todo!("to implement adding identifiers"),
                         _ => {
                             eprintln!("Adding must be two numbers or two strings");
@@ -877,14 +992,56 @@ fn eval(ex: Expr) -> TokenKind {
                     Number(left_num) => {
                         if let Number(right_num) = right {
                             Number(left_num + right_num)
+                        } else if let Identifier(right_ident) = right {
+                            let v = match ctx.variables.get(&right_ident) {
+                                Some(r) => r,
+                                None => {
+                                    eprintln!("Variable \"{right_ident}\" not found.");
+                                    std::process::exit(70);
+                                }
+                            };
+                            eval(
+                                Expr::Binary(l, o, Box::new(Expr::Literal(v.to_token_kind()))),
+                                ctx,
+                            )
                         } else {
                             eprintln!("Type Error: Cannot add a number to anything but a number");
                             std::process::exit(70);
                         }
                     }
-                    Identifier(_left_ident) => {
-                        eprintln!("We havent supported adding variables yet...");
-                        std::process::exit(70);
+                    Identifier(left_ident) => {
+                        let v = match ctx.variables.get(&left_ident) {
+                            Some(r) => r,
+                            None => {
+                                eprintln!(
+                                    "Variable \"{left_ident}\" is not found in the current scope",
+                                );
+                                std::process::exit(70);
+                            }
+                        };
+                        eval(
+                            Expr::Binary(
+                                Box::new(Expr::Literal(match v {
+                                    Value::Str(r) => Str(r.to_string()),
+                                    Value::Number(n) => Number(*n),
+                                    Value::Bool(b) => {
+                                        if *b {
+                                            True
+                                        } else {
+                                            False
+                                        }
+                                    }
+                                    Value::Nil => Nil,
+                                    Value::Object(_) => {
+                                        eprintln!("Adding anything to an object is not supported");
+                                        std::process::exit(70);
+                                    }
+                                })),
+                                o,
+                                r,
+                            ),
+                            ctx,
+                        )
                     }
                     l => {
                         eprintln!("We haven't supported adding {} and {} yet", l, right);
@@ -1054,11 +1211,11 @@ fn eval(ex: Expr) -> TokenKind {
                 l => todo!("{l}"),
             }
         }
-        Expr::Grouping(val) => eval(*val),
+        Expr::Grouping(val) => eval(*val, ctx),
         Expr::Unary(tolk, val) => {
             if let Minus = tolk.kind {
                 let other_val = *val;
-                if let Number(num) = eval(other_val.clone()) {
+                if let Number(num) = eval(other_val.clone(), ctx) {
                     Number(num * -1.0)
                 } else {
                     eprintln!("Operand must be a number.");
@@ -1066,7 +1223,7 @@ fn eval(ex: Expr) -> TokenKind {
                     std::process::exit(70);
                 }
             } else if let Bang = tolk.kind {
-                let evald = eval(*val);
+                let evald = eval(*val, ctx);
                 if let True = evald {
                     False
                 } else if let False = evald {
@@ -1081,6 +1238,16 @@ fn eval(ex: Expr) -> TokenKind {
             } else {
                 todo!("Idk wth this is {:?}{:?}", tolk, val);
             }
+        }
+    }
+}
+
+fn resolve(var: String, ctx: &Context) -> &Value {
+    match ctx.variables.get(&var) {
+        Some(r) => r,
+        None => {
+            eprintln!("Variable \"{}\" not found", var);
+            std::process::exit(70);
         }
     }
 }
