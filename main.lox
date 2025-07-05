@@ -1,5 +1,0 @@
-var bar = 99;
-var foo = 99;
-print bar + foo;
-var quz = 99;
-print bar + foo + quz;
